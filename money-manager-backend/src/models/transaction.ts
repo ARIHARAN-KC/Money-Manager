@@ -1,16 +1,17 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export type Division = "Personal" | "Office";
-export type Type = "Income" | "Expense";
+export type TransactionType = "Income" | "Expense";
 
 export interface ITransaction extends Document {
-    type: Type;
+    type: TransactionType;
     amount: number;
-    description: string;
+    description?: string;
     category: string;
     division: Division;
-    account: string; // Reference account ID
+    account: mongoose.Schema.Types.ObjectId;
     createdAt: Date;
+    updatedAt: Date;
 }
 
 const transactionSchema = new Schema<ITransaction>(
@@ -42,9 +43,7 @@ const transactionSchema = new Schema<ITransaction>(
             required: true
         },
     },
-    {
-        timestamps: true
-    }
+    { timestamps: true }
 );
 
 export default mongoose.model<ITransaction>("Transaction", transactionSchema);

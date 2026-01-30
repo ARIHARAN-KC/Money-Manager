@@ -1,74 +1,87 @@
 import { Request, Response } from "express";
 import Account from "../models/account";
 
-// Create a new account
-export const createAccount = async (req: Request, res: Response) => {
-    try {
-        const { name, balance } = req.body;
-        const existing = await Account.findOne({ name });
 
-        if (existing) return res.status(400).json({ error: "Account already exists" });
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
-        const account = await Account.create({ name, balance: balance || 0 });
-        res.status(201).json(account);
-    } catch (err) {
-        if (err instanceof Error) res.status(500).json({ error: err.message });
-        else res.status(500).json({ error: "Unknown error occurred" });
-    }
+
+//create account endpoint logic
+export const createAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, balance } = req.body;
+    if (!name) return res.status(400).json({ message: "Name is required" });
+    if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const existing = await Account.findOne({ name, user: req.userId });
+    if (existing) return res.status(400).json({ message: "Account already exists" });
+
+    const account = await Account.create({ name, balance: balance ?? 0, user: req.userId });
+    res.status(201).json(account);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Get all accounts
-export const getAccounts = async (_req: Request, res: Response) => {
-    try {
-        const accounts = await Account.find();
-        res.json(accounts);
-    } catch (err) {
-        if (err instanceof Error) res.status(500).json({ error: err.message });
-        else res.status(500).json({ error: "Unknown error occurred" });
-    }
+
+//get accounts endpoint logic[admin access]
+export const getAccounts = async (req: AuthRequest, res: Response) => {
+  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
+
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
+
+  const totalItems = await Account.countDocuments({ user: req.userId });
+  const accounts = await Account.find({ user: req.userId })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  res.json({
+    page,
+    limit,
+    totalPages: Math.ceil(totalItems / limit),
+    totalItems,
+    data: accounts,
+  });
 };
 
-// Get a single account by ID
-export const getAccountById = async (req: Request, res: Response) => {
-    try {
-        const account = await Account.findById(req.params.id);
-        if (!account) return res.status(404).json({ error: "Account not found" });
-        res.json(account);
-    } catch (err) {
-        if (err instanceof Error) res.status(500).json({ error: err.message });
-        else res.status(500).json({ error: "Unknown error occurred" });
-    }
+
+//get account by id endpoint logic
+export const getAccountById = async (req: AuthRequest, res: Response) => {
+  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
+
+  const account = await Account.findOne({ _id: req.params.id, user: req.userId });
+  if (!account) return res.status(404).json({ message: "Account not found" });
+
+  res.json(account);
 };
 
-// Update account balance or name
-export const updateAccount = async (req: Request, res: Response) => {
-    try {
-        const { name, balance } = req.body;
-        const account = await Account.findById(req.params.id);
 
-        if (!account) return res.status(404).json({ error: "Account not found" });
+//update account endpoint logic
+export const updateAccount = async (req: AuthRequest, res: Response) => {
+  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
 
-        if (name) account.name = name;
-        if (balance !== undefined) account.balance = balance;
+  const account = await Account.findOneAndUpdate(
+    { _id: req.params.id, user: req.userId },
+    req.body,
+    { new: true }
+  );
 
-        await account.save();
-        res.json(account);
-    } catch (err) {
-        if (err instanceof Error) res.status(500).json({ error: err.message });
-        else res.status(500).json({ error: "Unknown error occurred" });
-    }
+  if (!account) return res.status(404).json({ message: "Account not found" });
+  res.json(account);
 };
 
-// Delete account
-export const deleteAccount = async (req: Request, res: Response) => {
-    try {
-        const account = await Account.findByIdAndDelete(req.params.id);
 
-        if (!account) return res.status(404).json({ error: "Account not found" });
+// Delete account endpoint logic
+export const deleteAccount = async (req: AuthRequest, res: Response) => {
+  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
 
-        res.json({ message: "Account deleted successfully" });
-    } catch (err) {
-        if (err instanceof Error) res.status(500).json({ error: err.message });
-        else res.status(500).json({ error: "Unknown error occurred" });
-    }
+  const account = await Account.findOneAndDelete({ _id: req.params.id, user: req.userId });
+  if (!account) return res.status(404).json({ message: "Account not found" });
+
+  res.json({ message: "Account deleted" });
 };

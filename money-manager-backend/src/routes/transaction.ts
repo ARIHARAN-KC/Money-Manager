@@ -1,18 +1,32 @@
-import express from "express";
+import { Router } from "express";
 import {
   createTransaction,
   getTransactions,
   getTransactionById,
   updateTransaction,
   deleteTransaction,
+  transferTransaction,
 } from "../controllers/transaction";
+import { protect } from "../middlewares/auth";
 
-const router = express.Router();
+const router = Router();
 
-router.post("/", createTransaction);
-router.get("/", getTransactions);
-router.get("/:id", getTransactionById);
-router.put("/:id", updateTransaction);
-router.delete("/:id", deleteTransaction);
+// Create new transaction
+router.post("/", protect, createTransaction);
+
+// Get user's transactions
+router.get("/", protect, getTransactions);
+
+// Get transaction by ID
+router.get("/:id", protect, getTransactionById);
+
+// Update transaction
+router.put("/:id", protect, updateTransaction);
+
+// Delete transaction
+router.delete("/:id", protect, deleteTransaction);
+
+// Account to account transfer
+router.post("/transfer", protect, transferTransaction);
 
 export default router;

@@ -1,0 +1,177 @@
+{
+  "info": {
+    "name": "Money Manager API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for Money Manager API with success and failure test cases"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register - Success",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Test User\", \"email\": \"testuser@example.com\", \"password\": \"password123\"}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Fail (Missing fields)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"testuser@example.com\"}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Success",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"testuser@example.com\", \"password\": \"password123\"}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Fail (Invalid credentials)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"wrong@example.com\", \"password\": \"wrongpass\"}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Create Account - Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/accounts", "host": ["{{baseUrl}}"], "path": ["api","accounts"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Checking Account\", \"balance\": 1000}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Account - Fail (Missing name)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/accounts", "host": ["{{baseUrl}}"], "path": ["api","accounts"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"balance\": 1000}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Accounts - Success",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","accounts"],
+              "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "10"}]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account By ID - Fail (Unauthorized)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api","accounts","{{accountId}}"]}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Create Transaction - Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/transactions", "host": ["{{baseUrl}}"], "path": ["api","transactions"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\": \"expense\", \"amount\": 200, \"category\": \"Food\", \"accountId\": \"{{accountId}}\", \"note\": \"Lunch\"}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Transaction - Fail (Missing amount)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/transactions", "host": ["{{baseUrl}}"], "path": ["api","transactions"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\": \"income\", \"category\": \"Salary\", \"accountId\": \"{{accountId}}\"}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transactions - Success",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","transactions"],
+              "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "10"}]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

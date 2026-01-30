@@ -1,4 +1,4 @@
-import express from "express";
+import { Router } from "express";
 import {
   createAccount,
   getAccounts,
@@ -6,17 +6,26 @@ import {
   updateAccount,
   deleteAccount,
 } from "../controllers/account";
+import { protect } from "../middlewares/auth";
 
-const router = express.Router();
+const router = Router();
 
-router.post("/", createAccount);           // Create new account
+// Protect ALL account routes
+router.use(protect);
 
-router.get("/", getAccounts);              // Get all accounts
+// Create new account
+router.post("/", createAccount);
 
-router.get("/:id", getAccountById);        // Get account by ID
+// Get all accounts for admin
+router.get("/", getAccounts);
 
-router.put("/:id", updateAccount);         // Update account
+// Get account by ID (user-only)
+router.get("/:id", getAccountById);
 
-router.delete("/:id", deleteAccount);      // Delete account
+// Update account (user-only)
+router.put("/:id", updateAccount);
+
+// Delete account (user-only)
+router.delete("/:id", deleteAccount);
 
 export default router;

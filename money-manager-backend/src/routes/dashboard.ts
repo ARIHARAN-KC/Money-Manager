@@ -1,14 +1,21 @@
 import { Router } from "express";
 import {
-    getSummary,
-    categorySummary,
-    rangeSummary
+  getSummary,
+  categorySummary,
+  rangeSummary,
 } from "../controllers/dashboard";
+import { protect } from "../middlewares/auth";
+
 
 const router = Router();
 
-router.get("/summary", getSummary);
-router.get("/categories", categorySummary);
-router.get("/range", rangeSummary);
+// Get summary
+router.get("/summary", protect, getSummary);
+
+// Get category summary
+router.get("/categories", protect, categorySummary);
+
+// Get range summary
+router.get("/range", protect, rangeSummary);
 
 export default router;

@@ -10,7 +10,7 @@ interface AppJwtPayload extends JwtPayload {
 
 
 // Middleware to protect routes
-export const protect = ( req: Request, res: Response, next: NextFunction ) => {
+export const protect = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

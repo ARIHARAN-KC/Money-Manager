@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import passport from "./config/passport";
 
 import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
@@ -13,13 +14,21 @@ const app = express();
 // --- Global Middleware --- //
 
 // Enable CORS
-app.use(cors({ origin: "*" }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Parse JSON bodies
 app.use(express.json());
 
 // Security headers
 app.use(helmet());
+
+//Google oAuth
+app.use(passport.initialize());
 
 // Rate limiting
 app.use(

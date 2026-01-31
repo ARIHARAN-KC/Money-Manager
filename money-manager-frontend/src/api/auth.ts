@@ -6,6 +6,7 @@ interface AuthPayload {
   password: string;
 }
 
+//Auth api calls
 export const register = (data: AuthPayload) =>
   api.post("/auth/register", data);
 

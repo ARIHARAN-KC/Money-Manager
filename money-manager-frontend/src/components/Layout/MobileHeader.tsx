@@ -32,8 +32,8 @@ export const MobileHeader = () => {
               </svg>
             </button>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#6aba54] to-[#5aa044] rounded-lg flex items-center justify-center">
-                <img src="/logo.svg" alt="FinFlow Logo" className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 flex items-center justify-center">
+                <img src="/logo.svg" alt="FinFlow Logo" className="w-14 h-14 text-white" />
               </div>
               <span className="font-bold text-gray-800">FinFlow</span>
             </div>
@@ -52,17 +52,16 @@ export const MobileHeader = () => {
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
-              
+
               return (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-4 py-3 rounded-lg transition-colors duration-200 ${
-                    isActive
+                  className={`block px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
                       ? "bg-gradient-to-r from-[#6aba54]/10 to-[#5aa044]/10 text-[#6aba54] font-medium"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </Link>

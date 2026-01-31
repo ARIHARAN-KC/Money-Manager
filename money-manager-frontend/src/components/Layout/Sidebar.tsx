@@ -60,8 +60,8 @@ export const Sidebar = () => {
       {/* Brand Header */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#6aba54] to-[#5aa044] rounded-lg flex items-center justify-center shadow-sm">
-            <img src="/logo.svg" alt="FinFlow Logo" className="w-7 h-7 text-white" />
+          <div className="w-12 h-12 flex items-center justify-center">
+            <img src="/logo.svg" alt="FinFlow Logo" className="w-14 h-14 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
@@ -92,16 +92,15 @@ export const Sidebar = () => {
         <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
                     ? "bg-gradient-to-r from-[#6aba54]/10 to-[#5aa044]/10 text-[#6aba54] border border-[#6aba54]/20"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <div className={`${isActive ? "text-[#6aba54]" : "text-gray-400"}`}>
                   {item.icon}

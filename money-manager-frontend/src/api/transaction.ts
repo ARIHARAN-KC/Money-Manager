@@ -25,7 +25,7 @@ export interface CreateTransactionData {
   description?: string;
   category: string;
   division: "Personal" | "Office";
-  account: string; 
+  account: string;
 }
 
 // Pagination Response

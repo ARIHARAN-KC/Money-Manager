@@ -25,7 +25,7 @@ export const AccountForm = ({ onSuccess }: { onSuccess: () => void }) => {
     <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
       <div className="mb-6">
         <div className="flex items-center space-x-3 mb-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#6aba54]/10 to-[#5aa044]/10 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-linear-to-br from-[#6aba54]/10 to-[#5aa044]/10 rounded-lg flex items-center justify-center">
             <svg className="w-6 h-6 text-[#6aba54]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -93,9 +93,8 @@ export const AccountForm = ({ onSuccess }: { onSuccess: () => void }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-[#6aba54] hover:bg-[#5aa044] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6aba54] transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${
-              loading ? "opacity-80 cursor-not-allowed" : ""
-            }`}
+            className={`w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-[#6aba54] hover:bg-[#5aa044] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6aba54] transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${loading ? "opacity-80 cursor-not-allowed" : ""
+              }`}
           >
             {loading ? (
               <>
@@ -119,7 +118,7 @@ export const AccountForm = ({ onSuccess }: { onSuccess: () => void }) => {
         <div className="pt-4 border-t border-gray-100">
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-start">
-              <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 text-gray-400 mt-0.5 shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>

@@ -42,7 +42,7 @@ export const TransactionForm = () => {
       try {
         const res = await apiClient.get("/accounts");
         let accountsData: Account[] = [];
-        
+
         if (res.data && Array.isArray(res.data.data)) {
           accountsData = res.data.data;
         } else if (Array.isArray(res.data)) {
@@ -50,9 +50,9 @@ export const TransactionForm = () => {
         } else if (res.data && Array.isArray(res.data.items)) {
           accountsData = res.data.items;
         }
-        
+
         setAccounts(accountsData);
-        
+
         if (accountsData.length > 0 && !form.account) {
           setForm(prev => ({ ...prev, account: accountsData[0]._id }));
         }
@@ -80,7 +80,7 @@ export const TransactionForm = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === "amount") {
       setForm({ ...form, [name]: parseFloat(value) || 0 });
     } else if (name === "type" && (value === "Income" || value === "Expense")) {
@@ -113,24 +113,24 @@ export const TransactionForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (form.amount <= 0) {
       alert("Amount must be greater than 0");
       return;
     }
-    
+
     if (!form.category.trim()) {
       alert("Category is required");
       return;
     }
-    
+
     if (!form.account) {
       alert("Please select an account");
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const transactionData = {
         type: form.type,
@@ -162,29 +162,28 @@ export const TransactionForm = () => {
       "Entertainment", "Healthcare", "Education", "Salary", "Investment",
       "Gifts", "Travel", "Insurance", "Tax", "Other"
     ];
-    
+
     if (form.type === "Income") {
       return ["Salary", "Freelance", "Investment", "Business", "Gift", "Other Income"];
     }
-    
+
     return suggestions;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-2">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${
-              id ? "bg-gradient-to-br from-amber-500 to-orange-500" : "bg-gradient-to-br from-indigo-500 to-purple-600"
-            }`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${id ? "bg-linear-to-br from-amber-500 to-orange-500" : "bg-linear-to-br from-indigo-500 to-purple-600"
+              }`}>
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 {id ? "Edit Transaction" : "New Transaction"}
               </h1>
               <p className="text-sm text-gray-500">
@@ -205,16 +204,14 @@ export const TransactionForm = () => {
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, type: "Income" })}
-                  className={`flex-1 py-3 px-4 rounded-xl border transition-all duration-200 ${
-                    form.type === "Income"
+                  className={`flex-1 py-3 px-4 rounded-xl border transition-all duration-200 ${form.type === "Income"
                       ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      form.type === "Income" ? "bg-emerald-100" : "bg-gray-200"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.type === "Income" ? "bg-emerald-100" : "bg-gray-200"
+                      }`}>
                       <svg className={`w-4 h-4 ${form.type === "Income" ? "text-emerald-600" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -222,20 +219,18 @@ export const TransactionForm = () => {
                     <span className="font-medium">Income</span>
                   </div>
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, type: "Expense" })}
-                  className={`flex-1 py-3 px-4 rounded-xl border transition-all duration-200 ${
-                    form.type === "Expense"
+                  className={`flex-1 py-3 px-4 rounded-xl border transition-all duration-200 ${form.type === "Expense"
                       ? "bg-red-50 border-red-200 text-red-700 shadow-sm"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      form.type === "Expense" ? "bg-red-100" : "bg-gray-200"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.type === "Expense" ? "bg-red-100" : "bg-gray-200"
+                      }`}>
                       <svg className={`w-4 h-4 ${form.type === "Expense" ? "text-red-600" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -332,16 +327,14 @@ export const TransactionForm = () => {
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, division: "Personal" })}
-                  className={`py-3 px-4 rounded-xl border transition-all duration-200 ${
-                    form.division === "Personal"
+                  className={`py-3 px-4 rounded-xl border transition-all duration-200 ${form.division === "Personal"
                       ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      form.division === "Personal" ? "bg-blue-100" : "bg-gray-200"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.division === "Personal" ? "bg-blue-100" : "bg-gray-200"
+                      }`}>
                       <svg className={`w-4 h-4 ${form.division === "Personal" ? "text-blue-600" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -349,20 +342,18 @@ export const TransactionForm = () => {
                     <span className="font-medium">Personal</span>
                   </div>
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, division: "Office" })}
-                  className={`py-3 px-4 rounded-xl border transition-all duration-200 ${
-                    form.division === "Office"
+                  className={`py-3 px-4 rounded-xl border transition-all duration-200 ${form.division === "Office"
                       ? "bg-purple-50 border-purple-200 text-purple-700 shadow-sm"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      form.division === "Office" ? "bg-purple-100" : "bg-gray-200"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.division === "Office" ? "bg-purple-100" : "bg-gray-200"
+                      }`}>
                       <svg className={`w-4 h-4 ${form.division === "Office" ? "text-purple-600" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
@@ -437,7 +428,7 @@ export const TransactionForm = () => {
                   Add
                 </button>
               </div>
-              
+
               {form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {form.tags.map((tag, index) => (
@@ -461,15 +452,14 @@ export const TransactionForm = () => {
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons */}bg-gradient-to-r
             <div className="pt-6 border-t border-gray-100">
               <div className="flex space-x-3">
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`flex-1 flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${
-                    loading ? "opacity-80 cursor-not-allowed" : ""
-                  }`}
+                  className={`flex-1 flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white  from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${loading ? "opacity-80 cursor-not-allowed" : ""
+                    }`}
                 >
                   {loading ? (
                     <>
@@ -488,7 +478,7 @@ export const TransactionForm = () => {
                     </>
                   )}
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => navigate("/transactions")}
@@ -504,13 +494,13 @@ export const TransactionForm = () => {
           <div className="mt-6 pt-6 border-t border-gray-100">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
-                <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-gray-400 mt-0.5 shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
                   <p className="text-sm text-gray-600">
-                    <strong>Tips:</strong> Categorize your transactions accurately for better insights. 
-                    Use tags to filter and search transactions easily. 
+                    <strong>Tips:</strong> Categorize your transactions accurately for better insights.
+                    Use tags to filter and search transactions easily.
                     Make sure to select the correct account for accurate balance tracking.
                   </p>
                 </div>
@@ -520,14 +510,13 @@ export const TransactionForm = () => {
         </div>
 
         {/* Preview Card */}
-        <div className="mt-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+        <div className="mt-6 bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Transaction Preview</h3>
           <div className="bg-white rounded-xl p-4 border border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  form.type === "Income" ? "bg-emerald-100" : "bg-red-100"
-                }`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${form.type === "Income" ? "bg-emerald-100" : "bg-red-100"
+                  }`}>
                   <span className="text-lg">
                     {form.type === "Income" ? "💰" : "💸"}
                   </span>
@@ -539,16 +528,14 @@ export const TransactionForm = () => {
                   <p className="text-sm text-gray-500">{form.description || "No description"}</p>
                 </div>
               </div>
-              <div className={`text-lg font-bold ${
-                form.type === "Income" ? "text-emerald-600" : "text-red-600"
-              }`}>
+              <div className={`text-lg font-bold ${form.type === "Income" ? "text-emerald-600" : "text-red-600"
+                }`}>
                 {form.type === "Income" ? "+" : "-"}₹{form.amount.toLocaleString()}
               </div>
             </div>
             <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                form.division === "Personal" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-              }`}>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.division === "Personal" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                }`}>
                 {form.division}
               </span>
               <span>

@@ -24,7 +24,7 @@ export const TransferForm = () => {
         const res = await apiClient.get("/accounts");
         // Handle different response formats
         let accountsData: Account[] = [];
-        
+
         if (res.data && Array.isArray(res.data.data)) {
           // Format: { data: { items: [...] } }
           accountsData = res.data.data;
@@ -35,7 +35,7 @@ export const TransferForm = () => {
           // Format: { data: { items: [...] } } from getAccounts function
           accountsData = res.data.items;
         }
-        
+
         setAccounts(accountsData);
       } catch (err) {
         console.error("Failed to fetch accounts:", err);
@@ -46,7 +46,7 @@ export const TransferForm = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === "amount") {
       setForm({ ...form, [name]: parseFloat(value) || 0 });
     } else {
@@ -74,17 +74,17 @@ export const TransferForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!form.fromAccountId || !form.toAccountId) {
       alert("Please select both accounts");
       return;
     }
-    
+
     if (form.fromAccountId === form.toAccountId) {
       alert("Cannot transfer to the same account");
       return;
     }
-    
+
     if (form.amount <= 0) {
       alert("Amount must be greater than 0");
       return;
@@ -114,18 +114,18 @@ export const TransferForm = () => {
   const toAccount = accounts.find(a => a._id === form.toAccountId);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-12 h-12 bg-linear-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-linear-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
                 Transfer Money
               </h1>
               <p className="text-sm text-gray-500">Move funds between your accounts</p>
@@ -140,11 +140,10 @@ export const TransferForm = () => {
               <div className="flex items-center justify-between mb-4">
                 {/* From Account */}
                 <div className="text-center flex-1">
-                  <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 ${
-                    form.fromAccountId 
-                      ? "bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200" 
+                  <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 ${form.fromAccountId
+                      ? "bg-linear-to-br from-red-50 to-orange-50 border-2 border-red-200"
                       : "bg-gray-100 border-2 border-gray-200"
-                  }`}>
+                    }`}>
                     <svg className={`w-8 h-8 ${form.fromAccountId ? "text-red-500" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -172,11 +171,10 @@ export const TransferForm = () => {
 
                 {/* To Account */}
                 <div className="text-center flex-1">
-                  <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 ${
-                    form.toAccountId 
-                      ? "bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200" 
+                  <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 ${form.toAccountId
+                      ? "bg-linear-to-br from-emerald-50 to-green-50 border-2 border-emerald-200"
                       : "bg-gray-100 border-2 border-gray-200"
-                  }`}>
+                    }`}>
                     <svg className={`w-8 h-8 ${form.toAccountId ? "text-emerald-500" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -203,17 +201,15 @@ export const TransferForm = () => {
                       <div
                         key={`from-${account._id}`}
                         onClick={() => handleAccountSelect(account._id, 'from')}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                          form.fromAccountId === account._id
+                        className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${form.fromAccountId === account._id
                             ? "bg-red-50 border-red-200 ring-2 ring-red-100"
                             : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              form.fromAccountId === account._id ? "bg-red-100" : "bg-gray-200"
-                            }`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.fromAccountId === account._id ? "bg-red-100" : "bg-gray-200"
+                              }`}>
                               <svg className={`w-4 h-4 ${form.fromAccountId === account._id ? "text-red-600" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
@@ -246,17 +242,15 @@ export const TransferForm = () => {
                       <div
                         key={`to-${account._id}`}
                         onClick={() => handleAccountSelect(account._id, 'to')}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                          form.toAccountId === account._id
+                        className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${form.toAccountId === account._id
                             ? "bg-emerald-50 border-emerald-200 ring-2 ring-emerald-100"
                             : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              form.toAccountId === account._id ? "bg-emerald-100" : "bg-gray-200"
-                            }`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.toAccountId === account._id ? "bg-emerald-100" : "bg-gray-200"
+                              }`}>
                               <svg className={`w-4 h-4 ${form.toAccountId === account._id ? "text-emerald-600" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
@@ -348,7 +342,7 @@ export const TransferForm = () => {
 
             {/* Transfer Summary */}
             {fromAccount && toAccount && form.amount > 0 && (
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+              <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
                 <h4 className="font-semibold text-gray-800 mb-2">Transfer Summary</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -365,9 +359,8 @@ export const TransferForm = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">New Balance (From):</span>
-                    <span className={`font-medium ${
-                      fromAccount.balance - form.amount >= 0 ? "text-gray-800" : "text-red-600"
-                    }`}>
+                    <span className={`font-medium ${fromAccount.balance - form.amount >= 0 ? "text-gray-800" : "text-red-600"
+                      }`}>
                       ₹{(fromAccount.balance - form.amount).toLocaleString()}
                     </span>
                   </div>
@@ -387,11 +380,10 @@ export const TransferForm = () => {
                 <button
                   type="submit"
                   disabled={loading || !form.fromAccountId || !form.toAccountId || form.amount <= 0}
-                  className={`flex-1 flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${
-                    loading || !form.fromAccountId || !form.toAccountId || form.amount <= 0
+                  className={`flex-1 flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${loading || !form.fromAccountId || !form.toAccountId || form.amount <= 0
                       ? "opacity-50 cursor-not-allowed"
                       : ""
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <>
@@ -410,7 +402,7 @@ export const TransferForm = () => {
                     </>
                   )}
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => {
@@ -428,13 +420,13 @@ export const TransferForm = () => {
           <div className="mt-6 pt-6 border-t border-gray-100">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
-                <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-gray-400 mt-0.5 shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
                   <p className="text-sm text-gray-600">
-                    <strong>Note:</strong> Transfers are instant and will update both account balances immediately. 
-                    Make sure you have sufficient balance in the source account. 
+                    <strong>Note:</strong> Transfers are instant and will update both account balances immediately.
+                    Make sure you have sufficient balance in the source account.
                     You cannot transfer to the same account.
                   </p>
                 </div>

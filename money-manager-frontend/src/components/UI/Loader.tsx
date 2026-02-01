@@ -1,8 +1,6 @@
-import React from "react";
-
 export const Loader = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center">
       <div className="max-w-md w-full text-center">
         {/* Brand Header */}
         <div className="text-center mb-10">
@@ -11,7 +9,7 @@ export const Loader = () => {
               <img src="/logo.svg" alt="FinFlow Logo" className="w-14 h-14 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-linear-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
                 FinFlow
               </h1>
               <p className="text-xs text-gray-500 -mt-1">Smart Money Management</p>
@@ -46,7 +44,7 @@ export const Loader = () => {
             {/* Loading Progress Bar */}
             <div className="mb-8">
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-[#6aba54] to-[#5aa044] h-2 rounded-full animate-pulse"></div>
+                <div className="bg-linear-to-r from-[#6aba54] to-[#5aa044] h-2 rounded-full animate-pulse"></div>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 Fetching your financial data

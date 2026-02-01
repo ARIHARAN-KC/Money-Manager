@@ -8,11 +8,11 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const auth = useContext(AuthContext);
-  
+
   if (!auth) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (auth.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -20,10 +20,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       </div>
     );
   }
-  
+
   if (!auth.user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return <>{children}</>;
 };

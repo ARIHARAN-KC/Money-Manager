@@ -16,52 +16,52 @@ export const LoginPage = () => {
   const GOOGLE_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL}/auth/google?popup=true`;
 
   // Message handler
-const handleOAuthMessage = (event: MessageEvent) => {
-  // console.log("LoginPage - Received message from:", event.origin);
-  // console.log("LoginPage - Message data type:", event.data?.type);
-  
-  // Only accept messages from same origin
-  if (event.origin !== window.location.origin) {
-    // console.log("LoginPage - Origin mismatch, ignoring");
-    return;
-  }
-  
-  const { type, token, refreshToken, user, message } = event.data;
+  const handleOAuthMessage = (event: MessageEvent) => {
+    // console.log("LoginPage - Received message from:", event.origin);
+    // console.log("LoginPage - Message data type:", event.data?.type);
 
-  // console.log("LoginPage - Processing message type:", type);
+    // Only accept messages from same origin
+    if (event.origin !== window.location.origin) {
+      // console.log("LoginPage - Origin mismatch, ignoring");
+      return;
+    }
 
-  if (type === "oauth-success") {
-    // console.log("LoginPage - OAuth success! User:", user);
-    
-    if (token && refreshToken && user) {
-      // Set tokens immediately
-      setTokens(token, refreshToken);
-      
-      // Update auth context
-      auth.setUser(user);
-      setIsOAuthLoading(false);
-      
-      // console.log("LoginPage - FORCING navigation to dashboard in main window");
-      setTimeout(() => {
-        // Use window.location for 100% guaranteed navigation
-        window.location.href = "/dashboard";
-      }, 300); // Slightly longer delay to ensure everything is set
-    } else {
-      console.error("LoginPage - OAuth success but missing data");
-      setError("Authentication failed: Missing user data");
+    const { type, token, refreshToken, user, message } = event.data;
+
+    // console.log("LoginPage - Processing message type:", type);
+
+    if (type === "oauth-success") {
+      // console.log("LoginPage - OAuth success! User:", user);
+
+      if (token && refreshToken && user) {
+        // Set tokens immediately
+        setTokens(token, refreshToken);
+
+        // Update auth context
+        auth.setUser(user);
+        setIsOAuthLoading(false);
+
+        // console.log("LoginPage - FORCING navigation to dashboard in main window");
+        setTimeout(() => {
+          // Use window.location for 100% guaranteed navigation
+          window.location.href = "/dashboard";
+        }, 300); // Slightly longer delay to ensure everything is set
+      } else {
+        console.error("LoginPage - OAuth success but missing data");
+        setError("Authentication failed: Missing user data");
+        setIsOAuthLoading(false);
+      }
+    } else if (type === "oauth-error") {
+      // console.log("LoginPage - OAuth error:", message);
+      setError(message || "Google authentication failed.");
       setIsOAuthLoading(false);
     }
-  } else if (type === "oauth-error") {
-    // console.log("LoginPage - OAuth error:", message);
-    setError(message || "Google authentication failed.");
-    setIsOAuthLoading(false);
-  }
-};
+  };
   // Setup message listener
   useEffect(() => {
     // console.log("LoginPage - Setting up message listener");
     window.addEventListener("message", handleOAuthMessage);
-    
+
     return () => {
       // console.log("LoginPage - Cleaning up message listener");
       window.removeEventListener("message", handleOAuthMessage);
@@ -76,16 +76,16 @@ const handleOAuthMessage = (event: MessageEvent) => {
     try {
       //Use await and ensure login completes
       await auth.login(email, password);
-      
+
       //small delay to ensure state is updated
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
       }, 100);
-      
+
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 
-                          err.message || 
-                          "Invalid credentials. Please try again.";
+      const errorMessage = err.response?.data?.message ||
+        err.message ||
+        "Invalid credentials. Please try again.";
       setError(errorMessage);
       console.error("Login error:", err);
     } finally {
@@ -94,53 +94,53 @@ const handleOAuthMessage = (event: MessageEvent) => {
   };
 
   const handleGoogleLoginPopup = () => {
-  setIsOAuthLoading(true);
-  setError("");
-  
-  // console.log("LoginPage - Opening Google OAuth popup");
+    setIsOAuthLoading(true);
+    setError("");
 
-  const width = 500;
-  const height = 600;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
+    // console.log("LoginPage - Opening Google OAuth popup");
 
-  const popup = window.open(
-    GOOGLE_AUTH_URL,
-    "google-auth",
-    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,popup=yes`
-  );
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
 
-  if (!popup) {
-    setError("Popup blocked! Please allow popups for this site.");
-    setIsOAuthLoading(false);
-    return;
-  }
+    const popup = window.open(
+      GOOGLE_AUTH_URL,
+      "google-auth",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,popup=yes`
+    );
 
-  // Focus on the popup
-  popup.focus();
-
-  // Check if popup closes
-  const checkPopup = setInterval(() => {
-    if (popup.closed) {
-      clearInterval(checkPopup);
+    if (!popup) {
+      setError("Popup blocked! Please allow popups for this site.");
       setIsOAuthLoading(false);
-      // console.log("LoginPage - Popup closed");
-      
-      // After popup closes, check if we have tokens and redirect
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        // console.log("LoginPage - Token found after popup close, redirecting to dashboard");
-        // Small delay to ensure everything is processed
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 500);
-      }
+      return;
     }
-  }, 500);
-};
+
+    // Focus on the popup
+    popup.focus();
+
+    // Check if popup closes
+    const checkPopup = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkPopup);
+        setIsOAuthLoading(false);
+        // console.log("LoginPage - Popup closed");
+
+        // After popup closes, check if we have tokens and redirect
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          // console.log("LoginPage - Token found after popup close, redirecting to dashboard");
+          // Small delay to ensure everything is processed
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 500);
+        }
+      }
+    }, 500);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linaer-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         {/* Brand Header */}
         <div className="text-center mb-10">
@@ -149,7 +149,7 @@ const handleOAuthMessage = (event: MessageEvent) => {
               <img src="/logo.svg" alt="FinFlow Logo" className="w-14 h-14 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-linear-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
                 FinFlow
               </h1>
               <p className="text-xs text-gray-500 -mt-1">Smart Money Management</p>
@@ -166,9 +166,9 @@ const handleOAuthMessage = (event: MessageEvent) => {
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           {error && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
+            <div className="mb-6 p-4 bg-linear-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
               <div className="flex items-start">
-                <svg className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
                 <p className="ml-3 text-sm text-red-700">{error}</p>

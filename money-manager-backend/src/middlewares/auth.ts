@@ -2,12 +2,18 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "../config/env";
 
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
+  }
+}
 
 interface AppJwtPayload extends JwtPayload {
   id: string;
   email: string;
 }
-
 
 // Middleware to protect routes
 export const protect = (req: Request, res: Response, next: NextFunction) => {
@@ -19,7 +25,6 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
 
   try {
     const token = authHeader.split(" ")[1];
-
     const decoded = jwt.verify(token, JWT_SECRET) as AppJwtPayload;
 
     if (!decoded.id) {

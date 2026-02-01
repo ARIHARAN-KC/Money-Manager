@@ -25,19 +25,19 @@ export const TransactionCard = ({ transaction, onDeleted }: Props) => {
     const date = new Date(dateString);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-    
+
     if (isToday) {
       return "Today";
     }
-    
+
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const isYesterday = date.toDateString() === yesterday.toDateString();
-    
+
     if (isYesterday) {
       return "Yesterday";
     }
-    
+
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -86,18 +86,16 @@ export const TransactionCard = ({ transaction, onDeleted }: Props) => {
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-1">
               <h3 className="font-semibold text-gray-800">{transaction.category}</h3>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                transaction.type === "Income" 
-                  ? "bg-emerald-100 text-emerald-700" 
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${transaction.type === "Income"
+                  ? "bg-emerald-100 text-emerald-700"
                   : "bg-red-100 text-red-700"
-              }`}>
+                }`}>
                 {transaction.type}
               </span>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                transaction.division === "Personal"
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${transaction.division === "Personal"
                   ? "bg-blue-100 text-blue-700"
                   : "bg-purple-100 text-purple-700"
-              }`}>
+                }`}>
                 {transaction.division}
               </span>
             </div>
@@ -115,14 +113,14 @@ export const TransactionCard = ({ transaction, onDeleted }: Props) => {
                 </svg>
                 <span>{formatDate(transaction.createdAt)}</span>
               </div>
-              
+
               <div className="flex items-center space-x-1">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
                 <span>{transaction.account?.name || "No Account"}</span>
               </div>
-              
+
               {transaction.tags && transaction.tags.length > 0 && (
                 <div className="flex items-center space-x-1">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,11 +136,10 @@ export const TransactionCard = ({ transaction, onDeleted }: Props) => {
         {/* Right Section - Amount & Actions */}
         <div className="flex flex-col items-end space-y-3">
           {/* Amount */}
-          <div className={`text-xl font-bold ${
-            transaction.type === "Income" 
-              ? "text-emerald-600" 
+          <div className={`text-xl font-bold ${transaction.type === "Income"
+              ? "text-emerald-600"
               : "text-red-600"
-          }`}>
+            }`}>
             <span className="text-sm font-normal text-gray-500 mr-1">
               {transaction.type === "Income" ? "+" : "-"}
             </span>
@@ -161,7 +158,7 @@ export const TransactionCard = ({ transaction, onDeleted }: Props) => {
               </svg>
               Edit
             </button>
-            
+
             <button
               onClick={handleDelete}
               className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors duration-200 group/delete"
@@ -187,9 +184,9 @@ export const TransactionCard = ({ transaction, onDeleted }: Props) => {
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {new Date(transaction.createdAt).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
+            {new Date(transaction.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
             })}
           </span>
         </div>

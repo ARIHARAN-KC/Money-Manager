@@ -1,25 +1,24 @@
 import mongoose from "mongoose";
 
-const connectDB = async (mongoURI: string): Promise<void> => {
-  try {
-    if (!mongoURI) {
-      throw new Error("MongoDB URI is missing");
-    }
+let cached = (global as any).mongoose;
 
-    await mongoose.connect(mongoURI, {
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null };
+}
+
+const connectDB = async (mongoURI: string) => {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(mongoURI, {
+      bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
     });
-
-    console.log("MongoDB connected");
-  } catch (error) {
-    console.error("MongoDB connection failed");
-
-    if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error(error);
-    }
   }
+
+  cached.conn = await cached.promise;
+  console.log("MongoDB connected");
+  return cached.conn;
 };
 
 export default connectDB;

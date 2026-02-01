@@ -1,4 +1,8 @@
 {
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "yarn build",
+  "outputDirectory": "dist",
   "routes": [
     {
       "src": "/(.*)",

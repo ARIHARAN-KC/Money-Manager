@@ -131,13 +131,13 @@ export const DashboardPage = () => {
     navigate("/transactions");
   };
 
-  const handleViewReports = () => {
-    navigate("/reports");
-  };
+  // const handleViewReports = () => {
+  //   navigate("/reports");
+  // };
 
-  const handleViewBudget = () => {
-    navigate("/budget");
-  };
+  // const handleViewBudget = () => {
+  //   navigate("/budget");
+  // };
 
   if (loading && transactions.length === 0) {
     return (

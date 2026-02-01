@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   transaction: Transaction;
   onDeleted?: () => void;
+  onEdit?: () => void;
 }
 
 export const TransactionCard = ({ transaction, onDeleted }: Props) => {

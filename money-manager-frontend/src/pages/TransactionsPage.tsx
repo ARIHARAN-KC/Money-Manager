@@ -97,6 +97,12 @@ export const TransactionsPage = () => {
     fetchTransactions(page);
   };
 
+  // Add limit selector to use setLimit
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1); // Reset to first page when changing limit
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -149,6 +155,40 @@ export const TransactionsPage = () => {
           categories={categories}
         />
 
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <div className="flex items-center space-x-4">
+            {/* Show current filters summary */}
+            <div className="text-sm text-gray-600">
+              Showing {transactions.length} of {totalItems} transactions
+            </div>
+            
+            {/* Active filters indicator */}
+            {filters.type !== "all" || filters.division !== "all" || filters.category || 
+             filters.minAmount > 0 || filters.maxAmount < 1000000 ? (
+              <div className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
+                Filters Active
+              </div>
+            ) : null}
+          </div>
+
+          {/* Limit selector */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Show:</span>
+            <select 
+              value={limit}
+              onChange={(e) => handleLimitChange(Number(e.target.value))}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span className="text-sm text-gray-600">per page</span>
+          </div>
+        </div>
+
         {/* Transaction List */}
         {loading ? (
           <div className="text-center py-8">
@@ -178,17 +218,23 @@ export const TransactionsPage = () => {
                   key={transaction._id}
                   transaction={transaction}
                   onDeleted={handleDeleteSuccess}
+                  onEdit={() => handleEditTransaction(transaction._id)} // Add edit functionality
                 />
               ))}
             </div>
 
-            {/* Pagination */}
+            {/* Pagination with items count */}
             <div className="mt-6">
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={(newPage) => setPage(newPage)}
-              />
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+                <div className="text-sm text-gray-600">
+                  Page {page} of {totalPages} • {totalItems} total transactions
+                </div>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={(newPage) => setPage(newPage)}
+                />
+              </div>
             </div>
           </>
         )}

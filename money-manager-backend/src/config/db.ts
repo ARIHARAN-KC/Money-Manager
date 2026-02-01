@@ -19,8 +19,6 @@ const connectDB = async (mongoURI: string): Promise<void> => {
     } else {
       console.error(error);
     }
-
-    process.exit(1);
   }
 };
 

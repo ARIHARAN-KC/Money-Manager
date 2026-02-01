@@ -1,14 +1,23 @@
 import dotenv from "dotenv";
+
 dotenv.config();
 
 function requireEnv(name: string): string {
   const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required`);
+
+  if (!value || value.trim() === "") {
+    throw new Error(`Environment variable ${name} is required`);
   }
+
   return value;
 }
 
-export const PORT = Number(process.env.PORT ?? 5000);
-export const MONGO_URI = requireEnv("MONGO_URI");
-export const JWT_SECRET = requireEnv("JWT_SECRET");
+// Parse PORT safely without changing default behavior
+const parsedPort = Number(process.env.PORT);
+
+export const PORT: number = Number.isInteger(parsedPort) && parsedPort > 0
+  ? parsedPort
+  : 5000;
+
+export const MONGO_URI: string = requireEnv("MONGO_URI");
+export const JWT_SECRET: string = requireEnv("JWT_SECRET");

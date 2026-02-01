@@ -22,13 +22,13 @@ export const RegisterPage = () => {
     // console.log("RegisterPage - Received message:", event.data);
     // console.log("RegisterPage - Event origin:", event.origin);
     // console.log("RegisterPage - Window origin:", window.location.origin);
-    
+
     // Only accept messages from same origin
     if (event.origin !== window.location.origin) {
       // console.log("RegisterPage - Origin mismatch, ignoring message");
       return;
     }
-    
+
     const { type, token, refreshToken, user, message } = event.data;
 
     // console.log("RegisterPage - Processing message type:", type);
@@ -52,7 +52,7 @@ export const RegisterPage = () => {
   useEffect(() => {
     // console.log("RegisterPage - Setting up message listener");
     window.addEventListener("message", handleOAuthMessage);
-    
+
     return () => {
       // console.log("RegisterPage - Cleaning up message listener");
       window.removeEventListener("message", handleOAuthMessage);
@@ -88,53 +88,53 @@ export const RegisterPage = () => {
     }
   };
 
-const handleGoogleSignUpPopup = () => {
-  setIsOAuthLoading(true);
-  setError("");
-  
-  // console.log("LoginPage - Opening Google OAuth popup");
+  const handleGoogleSignUpPopup = () => {
+    setIsOAuthLoading(true);
+    setError("");
 
-  const width = 500;
-  const height = 600;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
+    // console.log("LoginPage - Opening Google OAuth popup");
 
-  const popup = window.open(
-    GOOGLE_AUTH_URL,
-    "google-auth",
-    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,popup=yes`
-  );
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
 
-  if (!popup) {
-    setError("Popup blocked! Please allow popups for this site.");
-    setIsOAuthLoading(false);
-    return;
-  }
+    const popup = window.open(
+      GOOGLE_AUTH_URL,
+      "google-auth",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,popup=yes`
+    );
 
-  // Focus on the popup
-  popup.focus();
-
-  // Check if popup closes
-  const checkPopup = setInterval(() => {
-    if (popup.closed) {
-      clearInterval(checkPopup);
+    if (!popup) {
+      setError("Popup blocked! Please allow popups for this site.");
       setIsOAuthLoading(false);
-      // console.log("LoginPage - Popup closed");
-      
-      // After popup closes, check if we have tokens and redirect
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        // console.log("LoginPage - Token found after popup close, redirecting to dashboard");
-        // Small delay to ensure everything is processed
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 500);
-      }
+      return;
     }
-  }, 500);
-};
+
+    // Focus on the popup
+    popup.focus();
+
+    // Check if popup closes
+    const checkPopup = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkPopup);
+        setIsOAuthLoading(false);
+        // console.log("LoginPage - Popup closed");
+
+        // After popup closes, check if we have tokens and redirect
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          // console.log("LoginPage - Token found after popup close, redirecting to dashboard");
+          // Small delay to ensure everything is processed
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 500);
+        }
+      }
+    }, 500);
+  };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         {/* Brand Header */}
         <div className="text-center mb-10">
@@ -143,7 +143,7 @@ const handleGoogleSignUpPopup = () => {
               <img src="/logo.svg" alt="FinFlow Logo" className="w-14 h-14 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-linaer-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
                 FinFlow
               </h1>
               <p className="text-xs text-gray-500 -mt-1">Smart Money Management</p>
@@ -160,9 +160,9 @@ const handleGoogleSignUpPopup = () => {
         {/* Registration Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           {error && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
+            <div className="mb-6 p-4 bg-linear-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
               <div className="flex items-start">
-                <svg className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
                 <p className="ml-3 text-sm text-red-700">{error}</p>
@@ -295,9 +295,8 @@ const handleGoogleSignUpPopup = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-[#6aba54] hover:bg-[#5aa044] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6aba54] transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${
-                  isLoading ? 'opacity-80 cursor-not-allowed' : ''
-                }`}
+                className={`w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-[#6aba54] hover:bg-[#5aa044] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6aba54] transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${isLoading ? 'opacity-80 cursor-not-allowed' : ''
+                  }`}
               >
                 {isLoading ? (
                   <>
@@ -336,9 +335,8 @@ const handleGoogleSignUpPopup = () => {
                 type="button"
                 onClick={handleGoogleSignUpPopup}
                 disabled={isOAuthLoading}
-                className={`w-full flex items-center justify-center py-3.5 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-100 transition-all duration-200 hover:border-gray-300 hover:shadow-sm ${
-                  isOAuthLoading ? 'opacity-70 cursor-not-allowed' : ''
-                }`}
+                className={`w-full flex items-center justify-center py-3.5 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-100 transition-all duration-200 hover:border-gray-300 hover:shadow-sm ${isOAuthLoading ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
               >
                 {isOAuthLoading ? (
                   <>

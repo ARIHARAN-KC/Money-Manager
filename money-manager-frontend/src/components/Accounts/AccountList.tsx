@@ -10,7 +10,7 @@ export const AccountList = ({
 }) => {
   const remove = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this account? This action cannot be undone.")) return;
-    
+
     try {
       await deleteAccount(id);
       onRefresh();
@@ -45,7 +45,7 @@ export const AccountList = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#6aba54]/10 to-[#5aa044]/10 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-linear-to-br from-[#6aba54]/10 to-[#5aa044]/10 rounded-lg flex items-center justify-center">
             <svg className="w-6 h-6 text-[#6aba54]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -55,7 +55,7 @@ export const AccountList = ({
             <p className="text-sm text-gray-500">Total {accounts.length} account{accounts.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
-        
+
         <div className="text-right">
           <p className="text-sm font-medium text-gray-500">Total Balance</p>
           <p className="text-2xl font-bold text-gray-800">
@@ -97,9 +97,8 @@ export const AccountList = ({
               <div className="flex items-center space-x-6">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-500">Current Balance</p>
-                  <p className={`text-xl font-bold ${
-                    account.balance >= 0 ? 'text-emerald-600' : 'text-red-600'
-                  }`}>
+                  <p className={`text-xl font-bold ${account.balance >= 0 ? 'text-emerald-600' : 'text-red-600'
+                    }`}>
                     {account.balance >= 0 ? '₹' : '-₹'}{Math.abs(account.balance).toLocaleString()}
                   </p>
                 </div>

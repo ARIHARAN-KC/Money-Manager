@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // console.log("AuthProvider - Initializing...");
     const token = getAccessToken();
-    
+
     if (!token) {
       // console.log("AuthProvider - No token found");
       setLoading(false);
@@ -61,16 +61,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // console.log("AuthContext - Attempting login for:", email);
       const { data } = await loginApi({ email, password });
-      
+
       if (!data.token || !data.refreshToken) {
         console.error("AuthContext - Login failed: Missing tokens");
         throw new Error("Authentication failed: Missing tokens");
       }
-      
+
       // console.log("AuthContext - Login successful, setting tokens");
       setTokens(data.token, data.refreshToken);
       setUser(data.user);
-      
+
       // console.log("AuthContext - User set:", data.user);
       return Promise.resolve();
     } catch (error: any) {
@@ -83,16 +83,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // console.log("AuthContext - Attempting registration for:", email);
       const { data } = await registerApi({ name, email, password });
-      
+
       if (!data.token || !data.refreshToken) {
         console.error("AuthContext - Registration failed: Missing tokens");
         throw new Error("Registration failed: Missing tokens");
       }
-      
+
       // console.log("AuthContext - Registration successful, setting tokens");
       setTokens(data.token, data.refreshToken);
       setUser(data.user);
-      
+
       console.log("AuthContext - User set:", data.user);
       return Promise.resolve();
     } catch (error: any) {

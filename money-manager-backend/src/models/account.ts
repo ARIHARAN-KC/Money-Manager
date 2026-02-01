@@ -1,6 +1,5 @@
 import mongoose, { Schema, Types, Model } from "mongoose";
 
-
 export interface IAccount {
   name: string;
   balance: number;
@@ -8,7 +7,6 @@ export interface IAccount {
   createdAt?: Date;
   updatedAt?: Date;
 }
-
 
 const accountSchema = new Schema<IAccount>(
   {
@@ -28,16 +26,18 @@ const accountSchema = new Schema<IAccount>(
       index: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-
+// Prevent duplicate account names per user
 accountSchema.index({ name: 1, user: 1 }, { unique: true });
 
-
+// Ensure correct model reuse in hot-reload / serverless
 const Account: Model<IAccount> =
-  mongoose.models.Account ||
+  mongoose.models.Account ??
   mongoose.model<IAccount>("Account", accountSchema);
-
 
 export default Account;

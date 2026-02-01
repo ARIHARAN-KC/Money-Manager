@@ -59,8 +59,8 @@ export const MobileHeader = () => {
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
                   className={`block px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
-                      ? "bg-gradient-to-r from-[#6aba54]/10 to-[#5aa044]/10 text-[#6aba54] font-medium"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-linear-to-r from-[#6aba54]/10 to-[#5aa044]/10 text-[#6aba54] font-medium"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                 >
                   {item.label}

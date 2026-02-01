@@ -1,15 +1,24 @@
-// money-manager-frontend/src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+//Auth
 import { AuthProvider } from "./context/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { OAuthSuccess } from "./pages/OAuthSuccess";
+
+//Protected
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+
+//Pages
 import { DashboardPage } from "./pages/DashboardPage";
 import { AccountsPage } from "./pages/AccountsPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
-import { TransactionForm } from "./components/Transactions/TransactionForm";
-import { TransferForm } from "./components/Transactions/TransferForm";
+import { BudgetPage } from "./pages/BudgetPage";
+import { ReportsPage } from "./pages/ReportsPage";
+
+//Components
+import { TransferForm } from "./components/Transactions/TransferForm";  
+//Layout
 import { Layout } from "./components/Layout/Layout";
 
 function App() {
@@ -45,20 +54,6 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          <Route path="/transactions/new" element={
-            <ProtectedRoute>
-              <Layout>
-                <TransactionForm />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/transactions/:id/edit" element={
-            <ProtectedRoute>
-              <Layout>
-                <TransactionForm />
-              </Layout>
-            </ProtectedRoute>
-          } />
           <Route path="/transactions/transfer" element={
             <ProtectedRoute>
               <Layout>
@@ -66,7 +61,21 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          
+          <Route path="/budget" element={
+            <ProtectedRoute>
+              <Layout>
+                <BudgetPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedRoute>
+              <Layout>
+                <ReportsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

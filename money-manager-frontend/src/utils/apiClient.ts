@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 → refresh token
+// Handle 401 -> refresh token
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

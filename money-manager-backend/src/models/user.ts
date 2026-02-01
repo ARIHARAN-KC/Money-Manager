@@ -5,7 +5,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  provider: "local" | "google";
+  provider: "manual" | "google";
   comparePassword(password: string): Promise<boolean>;
   createdAt?: Date;
   updatedAt?: Date;
@@ -34,16 +34,19 @@ const userSchema = new Schema<IUser>(
     },
     provider: {
       type: String,
-      enum: ["local", "google"],
-      default: "local",
+      enum: ["manual", "google"],
+      default: "manual",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-// Hash password ONLY for local users
+// Hash password ONLY for manual login/register users
 userSchema.pre<IUser>("save", async function () {
-  if (this.provider !== "local") return;
+  if (this.provider !== "manual") return;
   if (!this.isModified("password")) return;
 
   this.password = await bcrypt.hash(this.password, 10);
@@ -56,7 +59,9 @@ userSchema.methods.comparePassword = async function (
   return bcrypt.compare(password, this.password);
 };
 
+// Safe model reuse (dev hot reload / serverless)
 const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+  mongoose.models.User ??
+  mongoose.model<IUser>("User", userSchema);
 
 export default User;

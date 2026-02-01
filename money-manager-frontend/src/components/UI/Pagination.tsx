@@ -32,11 +32,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           key={pageNum}
           onClick={() => onPageChange(pageNum)}
-          className={`px-3 py-1 border rounded ${
-            currentPage === pageNum
+          className={`px-3 py-1 border rounded ${currentPage === pageNum
               ? "bg-blue-500 text-white"
               : "hover:bg-gray-100"
-          }`}
+            }`}
         >
           {pageNum}
         </button>

@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth";
 import accountRoutes from "./routes/account";
 import transactionRoutes from "./routes/transaction";
 import dashboardRoutes from "./routes/dashboard";
+import budgetRoutes from "./routes/budget";
+import reportRoutes from "./routes/report";
 
 const app = express();
 
@@ -47,6 +49,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+
+app.use("/api/budget", budgetRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Health check
 app.get("/health", (_req, res) => {

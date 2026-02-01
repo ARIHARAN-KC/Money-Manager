@@ -29,7 +29,7 @@ export const AccountsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <Loader />
         </div>
@@ -38,25 +38,25 @@ export const AccountsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#6aba54] to-[#5aa044] rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 bg-linear-to-br from-[#6aba54] to-[#5aa044] rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
                   Accounts
                 </h1>
                 <p className="text-sm text-gray-500">Manage your financial accounts</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="bg-white rounded-xl px-4 py-2 border border-gray-200 shadow-sm">
                 <p className="text-xs text-gray-500">Total Accounts</p>
@@ -76,7 +76,7 @@ export const AccountsPage = () => {
           {/* Left Column - Account Form */}
           <div className="lg:col-span-1">
             <AccountForm onSuccess={loadAccounts} />
-            
+
             {/* Stats Card */}
             <div className="mt-6 bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Statistics</h3>
@@ -89,15 +89,15 @@ export const AccountsPage = () => {
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance > 0).length / accounts.length) * 100 : 0}%` 
+                      style={{
+                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance > 0).length / accounts.length) * 100 : 0}%`
                       }}
                     ></div>
                   </div>
                 </div>
-                
+
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium text-gray-700">Zero Balance</span>
@@ -106,15 +106,15 @@ export const AccountsPage = () => {
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-gray-400 h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance === 0).length / accounts.length) * 100 : 0}%` 
+                      style={{
+                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance === 0).length / accounts.length) * 100 : 0}%`
                       }}
                     ></div>
                   </div>
                 </div>
-                
+
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium text-gray-700">Negative Balance</span>
@@ -123,16 +123,16 @@ export const AccountsPage = () => {
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-red-500 h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance < 0).length / accounts.length) * 100 : 0}%` 
+                      style={{
+                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance < 0).length / accounts.length) * 100 : 0}%`
                       }}
                     ></div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <div className="flex items-center space-x-3">
                   <svg className="w-5 h-5 text-[#6aba54]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,10 +149,10 @@ export const AccountsPage = () => {
           {/* Right Column - Account List */}
           <div className="lg:col-span-2">
             <AccountList accounts={accounts} onRefresh={loadAccounts} />
-            
+
             {/* Quick Actions */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
+              <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +169,7 @@ export const AccountsPage = () => {
                 </button>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 border border-emerald-100">
+              <div className="bg-linear-to-br from-emerald-50 to-green-50 rounded-2xl p-4 border border-emerald-100">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,7 +186,7 @@ export const AccountsPage = () => {
                 </button>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-4 border border-purple-100">
+              <div className="bg-linear-to-br from-purple-50 to-violet-50 rounded-2xl p-4 border border-purple-100">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

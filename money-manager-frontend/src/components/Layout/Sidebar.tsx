@@ -64,7 +64,7 @@ export const Sidebar = () => {
             <img src="/logo.svg" alt="FinFlow Logo" className="w-14 h-14 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold bg-linear-to-r from-[#6aba54] to-[#5aa044] bg-clip-text text-transparent">
               FinFlow
             </h1>
             <p className="text-xs text-gray-500">Smart Money</p>
@@ -75,7 +75,7 @@ export const Sidebar = () => {
       {/* User Profile */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#6aba54]/20 to-[#5aa044]/20 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-linear-to-br from-[#6aba54]/20 to-[#5aa044]/20 rounded-full flex items-center justify-center">
             <span className="text-lg font-semibold text-[#6aba54]">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </span>
@@ -98,8 +98,8 @@ export const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                    ? "bg-gradient-to-r from-[#6aba54]/10 to-[#5aa044]/10 text-[#6aba54] border border-[#6aba54]/20"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-linear-to-r from-[#6aba54]/10 to-[#5aa044]/10 text-[#6aba54] border border-[#6aba54]/20"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}
               >
                 <div className={`${isActive ? "text-[#6aba54]" : "text-gray-400"}`}>

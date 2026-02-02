@@ -12,29 +12,15 @@ import { getAccounts } from "../api/accounts"; // Import accounts API
 import type { Account } from "../types/account"; // Import Account type
 import { Loader } from "../components/UI/Loader";
 
-type Transaction = {
-  _id: string;
-  category: string;
-  type: "Income" | "Expense";
-  amount: number;
-  description?: string;
-  division: "Personal" | "Office";
-  account: {
-    _id: string;
-    name: string;
-  };
-  createdAt: string;
-};
-
-interface FilterOptions {
-  startDate: string;
-  endDate: string;
-  type: "all" | "Income" | "Expense";
-  division: "all" | "Personal" | "Office";
-  category: string;
-  minAmount: number;
-  maxAmount: number;
-}
+// interface FilterOptions {
+//   startDate: string;
+//   endDate: string;
+//   type: "all" | "Income" | "Expense";
+//   division: "all" | "Personal" | "Office";
+//   category: string;
+//   minAmount: number;
+//   maxAmount: number;
+// }
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
@@ -43,7 +29,6 @@ export const DashboardPage = () => {
   const [categoryData, setCategoryData] = useState<CategorySummaryResponse[]>([]);
   const [rangeData, setRangeData] = useState<RangeSummaryApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [allCategories, setAllCategories] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]); // Add accounts state
 
   // Calculate derived summary values
@@ -57,6 +42,10 @@ export const DashboardPage = () => {
   // Calculate expenses as: Total Income - Net Balance (Savings)
   // This ensures expenses don't include savings
   const calculatedExpenses = Math.max(0, incomeTotal - netBalance);
+  
+  // Calculate actual expense percentage
+  const expensePercentage = incomeTotal > 0 ? (calculatedExpenses / incomeTotal) * 100 : 0;
+  const savingsPercentage = incomeTotal > 0 ? (netBalance / incomeTotal) * 100 : 0;
 
   // Set default date range to last 30 days
   const endDate = new Date().toISOString().split('T')[0];
@@ -80,15 +69,6 @@ export const DashboardPage = () => {
       setRangeData(rangeRes);
       setAccounts(accountsRes.data?.data || []); // Set accounts data
 
-      // Extract categories from both sources
-      const uniqueCategories = Array.from(
-        new Set([
-          ...(categoryRes.summary?.map(item => item._id) || []),
-          ...(rangeRes.transactions?.map((t: any) => t.category) || [])
-        ])
-      ).filter(Boolean) as string[];
-
-      setAllCategories(uniqueCategories);
     } catch (err) {
       console.error("Dashboard load failed", err);
       // Set default values on error
@@ -114,51 +94,12 @@ export const DashboardPage = () => {
     loadDashboard();
   }, [type]);
 
-  const handleFilterChange = async (newFilters: FilterOptions) => {
-    try {
-      setLoading(true);
-      const res = await getRangeTransactions(
-        newFilters.startDate,
-        newFilters.endDate,
-        1,
-        10
-      );
-
-      if (res && res.transactions) {
-        let filtered = [...res.transactions];
-
-        // Apply additional filters
-        if (newFilters.type !== "all") {
-          filtered = filtered.filter((t: any) => t.type === newFilters.type);
-        }
-
-        if (newFilters.division !== "all") {
-          filtered = filtered.filter((t: any) => t.division === newFilters.division);
-        }
-
-        if (newFilters.category) {
-          filtered = filtered.filter((t: any) => t.category === newFilters.category);
-        }
-
-        filtered = filtered.filter((t: any) =>
-          t.amount >= newFilters.minAmount && t.amount <= newFilters.maxAmount
-        );
-
-        setRangeData({
-          ...res,
-          transactions: filtered,
-          totalTransactions: filtered.length,
-        });
-      }
-    } catch (err) {
-      console.error("Filter failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleViewAllTransactions = () => {
     navigate("/transactions");
+  };
+
+  const handleViewAllAccounts = () => {
+    navigate("/accounts");
   };
 
   if (loading && !rangeData) {
@@ -178,6 +119,9 @@ export const DashboardPage = () => {
   const officeTransactions = transactions.filter((t: any) => t.division === "Office").length;
   const incomeTransactions = transactions.filter((t: any) => t.type === "Income").length;
   const expenseTransactions = transactions.filter((t: any) => t.type === "Expense").length;
+
+  // Calculate total accounts balance
+  const totalAccountsBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -236,7 +180,12 @@ export const DashboardPage = () => {
             <h3 className="text-sm font-medium text-gray-500 mb-2">Total Income</h3>
             <p className="text-3xl font-bold text-gray-800">₹{incomeTotal.toLocaleString()}</p>
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Total earnings this {type}</p>
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-gray-500">This {type}</p>
+                <p className="text-xs font-medium text-emerald-600">
+                  {incomeTransactions} transaction{incomeTransactions !== 1 ? 's' : ''}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -255,8 +204,23 @@ export const DashboardPage = () => {
             <h3 className="text-sm font-medium text-gray-500 mb-2">Total Expenses</h3>
             <p className="text-3xl font-bold text-gray-800">₹{calculatedExpenses.toLocaleString()}</p>
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Total spending this {type}</p>
-              <p className="text-xs text-gray-400 mt-1">(Income - Savings)</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-gray-500">This {type}</p>
+                  <p className="text-xs font-medium text-red-600">
+                    {expenseTransactions} transaction{expenseTransactions !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-red-500 h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(expensePercentage, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  {expensePercentage.toFixed(1)}% of income
+                </p>
+              </div>
             </div>
           </div>
 
@@ -285,25 +249,55 @@ export const DashboardPage = () => {
               ₹{netBalance.toLocaleString()}
             </p>
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Current savings balance</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {primaryAccount ? primaryAccount.name : "Set a primary account"}
-              </p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-gray-500">
+                    {primaryAccount ? primaryAccount.name : "Set primary account"}
+                  </p>
+                  <button
+                    onClick={handleViewAllAccounts}
+                    className="text-xs font-medium text-[#6aba54] hover:text-[#5aa044] transition-colors"
+                  >
+                    View Accounts
+                  </button>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(savingsPercentage, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  {savingsPercentage.toFixed(1)}% of income saved
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Quick Info Banner */}
         <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-          <div className="flex items-center space-x-3">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p className="text-sm font-medium text-blue-800">How it's calculated:</p>
-              <p className="text-xs text-blue-600">
-                Expenses = Total Income - Savings | Savings = Primary Account Balance
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-3">
+              <svg className="w-5 h-5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-blue-800">How it's calculated:</p>
+                <p className="text-xs text-blue-600">
+                  Expenses = Total Income ({incomeTotal.toLocaleString()}) - Savings ({netBalance.toLocaleString()}) = {calculatedExpenses.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-blue-700">Total Accounts</p>
+                <p className="text-lg font-bold text-blue-800">{accounts.length}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-medium text-blue-700">Total Balance</p>
+                <p className="text-lg font-bold text-blue-800">₹{totalAccountsBalance.toLocaleString()}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -313,9 +307,14 @@ export const DashboardPage = () => {
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-800">Category Breakdown</h2>
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
+                  {categoryData.length} categories
+                </span>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
 
             {categoryData.length === 0 ? (
@@ -326,6 +325,7 @@ export const DashboardPage = () => {
                   </svg>
                 </div>
                 <p className="text-gray-500">No category data available</p>
+                <p className="text-xs text-gray-400 mt-1">Add transactions to see category breakdown</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -334,13 +334,19 @@ export const DashboardPage = () => {
                   const totalExpense = category.expense || 0;
                   const netTotal = totalIncome - totalExpense;
                   const isPositive = netTotal >= 0;
+                  const categoryPercentage = incomeTotal > 0 ? ((totalIncome + totalExpense) / (incomeTotal + expenseTotal)) * 100 : 0;
 
                   return (
                     <div key={category._id} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 rounded-full bg-[#6aba54]"></div>
-                          <span className="font-medium text-gray-700">{category._id}</span>
+                          <div className={`w-3 h-3 rounded-full ${isPositive ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                          <div>
+                            <span className="font-medium text-gray-700">{category._id}</span>
+                            <p className="text-xs text-gray-500">
+                              {categoryPercentage.toFixed(1)}% of total
+                            </p>
+                          </div>
                         </div>
                         <div className="text-right">
                           <span className={`font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -375,13 +381,21 @@ export const DashboardPage = () => {
           {/* Recent Transactions */}
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Recent Transactions</h2>
-              <button
-                onClick={handleViewAllTransactions}
-                className="text-sm font-medium text-[#6aba54] hover:text-[#5aa044] transition-colors"
-              >
-                View All
-              </button>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">Recent Transactions</h2>
+                <p className="text-sm text-gray-500">Last 30 days</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleViewAllTransactions}
+                  className="text-sm font-medium text-[#6aba54] hover:text-[#5aa044] transition-colors"
+                >
+                  View All
+                </button>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </div>
             </div>
 
             {transactions.length === 0 ? (
@@ -392,10 +406,14 @@ export const DashboardPage = () => {
                   </svg>
                 </div>
                 <p className="text-gray-500">No transactions found</p>
+                <p className="text-xs text-gray-400 mt-1">No transactions in the last 30 days</p>
                 <button
                   onClick={() => navigate("/transactions")}
                   className="mt-4 inline-flex items-center px-4 py-2 bg-[#6aba54] text-white rounded-lg hover:bg-[#5aa044] transition-colors"
                 >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
                   Add Transaction
                 </button>
               </div>
@@ -404,7 +422,7 @@ export const DashboardPage = () => {
                 {transactions.slice(0, 5).map((transaction: any) => (
                   <div
                     key={transaction._id}
-                    className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200"
+                    className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200 hover:bg-gray-50"
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${transaction.type === "Income"
@@ -429,9 +447,17 @@ export const DashboardPage = () => {
                             {transaction.division}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {transaction.description || "No description"} • {new Date(transaction.createdAt).toLocaleDateString()}
+                            {new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short'
+                            })}
                           </span>
                         </div>
+                        {transaction.description && (
+                          <p className="text-xs text-gray-500 mt-1 truncate max-w-xs">
+                            {transaction.description}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -440,6 +466,9 @@ export const DashboardPage = () => {
                         {transaction.type === "Income" ? "+" : "-"}₹{transaction.amount.toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-500">{transaction.account?.name}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {transaction.type === "Income" ? "Received" : "Spent"}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -462,6 +491,9 @@ export const DashboardPage = () => {
                 <p className="text-lg font-bold text-emerald-800">
                   {incomeTransactions}
                 </p>
+                <p className="text-xs text-emerald-600">
+                  ₹{incomeTotal.toLocaleString()} total
+                </p>
               </div>
             </div>
           </div>
@@ -477,6 +509,9 @@ export const DashboardPage = () => {
                 <p className="text-sm font-medium text-red-700">Expense Transactions</p>
                 <p className="text-lg font-bold text-red-800">
                   {expenseTransactions}
+                </p>
+                <p className="text-xs text-red-600">
+                  ₹{expenseTotal.toLocaleString()} raw total
                 </p>
               </div>
             </div>
@@ -494,6 +529,9 @@ export const DashboardPage = () => {
                 <p className="text-lg font-bold text-blue-800">
                   {personalTransactions}
                 </p>
+                <p className="text-xs text-blue-600">
+                  {personalTransactions > 0 ? `${((personalTransactions / transactions.length) * 100).toFixed(0)}% of total` : 'No transactions'}
+                </p>
               </div>
             </div>
           </div>
@@ -509,6 +547,9 @@ export const DashboardPage = () => {
                 <p className="text-sm font-medium text-purple-700">Office</p>
                 <p className="text-lg font-bold text-purple-800">
                   {officeTransactions}
+                </p>
+                <p className="text-xs text-purple-600">
+                  {officeTransactions > 0 ? `${((officeTransactions / transactions.length) * 100).toFixed(0)}% of total` : 'No transactions'}
                 </p>
               </div>
             </div>

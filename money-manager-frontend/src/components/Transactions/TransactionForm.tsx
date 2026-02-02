@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createTransaction, updateTransaction, getTransactionById } from "../../api/transaction";
-import type { Transaction, CreateTransactionData } from "../../api/transaction";
+import type { CreateTransactionData } from "../../api/transaction";
 import { getAccounts } from "../../api/accounts";
 import type { PaginatedResponse } from "../../api/accounts";
 import { useNavigate, useParams } from "react-router-dom";
@@ -226,8 +226,8 @@ export const TransactionForm = () => {
                   type="button"
                   onClick={() => setForm({ ...form, type: "Income" })}
                   className={`flex-1 py-3 px-4 rounded-xl border transition-all duration-200 ${form.type === "Income"
-                      ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm"
-                      : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
@@ -245,8 +245,8 @@ export const TransactionForm = () => {
                   type="button"
                   onClick={() => setForm({ ...form, type: "Expense" })}
                   className={`flex-1 py-3 px-4 rounded-xl border transition-all duration-200 ${form.type === "Expense"
-                      ? "bg-red-50 border-red-200 text-red-700 shadow-sm"
-                      : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    ? "bg-red-50 border-red-200 text-red-700 shadow-sm"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     }`}
                 >
                   <div className="flex items-center justify-center space-x-2">
@@ -352,8 +352,8 @@ export const TransactionForm = () => {
                   type="button"
                   onClick={() => setForm({ ...form, division: "Personal" })}
                   className={`py-3 px-4 rounded-xl border transition-all duration-200 ${form.division === "Personal"
-                      ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
-                      : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     }`}
                   disabled={loading}
                 >
@@ -372,8 +372,8 @@ export const TransactionForm = () => {
                   type="button"
                   onClick={() => setForm({ ...form, division: "Office" })}
                   className={`py-3 px-4 rounded-xl border transition-all duration-200 ${form.division === "Office"
-                      ? "bg-purple-50 border-purple-200 text-purple-700 shadow-sm"
-                      : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    ? "bg-purple-50 border-purple-200 text-purple-700 shadow-sm"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     }`}
                   disabled={loading}
                 >

@@ -1,6 +1,6 @@
 import { Response } from "express";
-import Transaction, { ITransaction as TransactionType } from "../models/transaction";
-import Account, { IAccount } from "../models/account";
+import Transaction from "../models/transaction";
+import Account from "../models/account";
 import { canEditTransaction } from "../utils/time";
 import { AuthRequest } from "../types/account";
 import { ITransaction } from "../types/transaction";
@@ -56,7 +56,7 @@ export const getTransactions = async (
 
     const [transactions, total] = await Promise.all([
       Transaction.find({ account: { $in: accountIds } })
-        .populate<{ account: IAccount }>("account")
+        .populate("account")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -85,13 +85,17 @@ export const getTransactionById = async (
     if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
 
     const transaction = await Transaction.findOne({ _id: req.params.id })
-      .populate<{ account: IAccount }>("account");
+      .populate("account");
 
     if (!transaction) return res.status(404).json({ message: "Transaction not found" });
 
-    // Cast account to any to access user property
-    const account = transaction.account as any;
-    if (account.user.toString() !== req.userId) {
+    // Check if user owns the account
+    const account = await Account.findOne({ 
+      _id: transaction.account,
+      user: req.userId 
+    });
+    
+    if (!account) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -110,14 +114,17 @@ export const updateTransaction = async (
   try {
     if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const transaction = await Transaction.findById(req.params.id)
-      .populate<{ account: IAccount }>("account");
+    const transaction = await Transaction.findById(req.params.id);
     
     if (!transaction) return res.status(404).json({ message: "Transaction not found" });
 
-    // Cast account to any to access user property
-    const account = transaction.account as any;
-    if (account.user.toString() !== req.userId) {
+    // Check if user owns the account
+    const account = await Account.findOne({ 
+      _id: transaction.account,
+      user: req.userId 
+    });
+    
+    if (!account) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -143,14 +150,17 @@ export const deleteTransaction = async (
   try {
     if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const transaction = await Transaction.findById(req.params.id)
-      .populate<{ account: IAccount }>("account");
+    const transaction = await Transaction.findById(req.params.id);
     
     if (!transaction) return res.status(404).json({ message: "Transaction not found" });
 
-    // Cast account to any to access user property
-    const account = transaction.account as any;
-    if (account.user.toString() !== req.userId) {
+    // Check if user owns the account
+    const account = await Account.findOne({ 
+      _id: transaction.account,
+      user: req.userId 
+    });
+    
+    if (!account) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -162,7 +172,7 @@ export const deleteTransaction = async (
   }
 };
 
-// Transfer between accounts
+// Transfer between accounts - SIMPLIFIED VERSION WITHOUT SESSIONS
 export const transferTransaction = async (
   req: AuthRequest<{ fromAccountId: string; toAccountId: string; amount: number; description?: string }>,
   res: Response
@@ -184,6 +194,7 @@ export const transferTransaction = async (
       return res.status(400).json({ message: "Amount must be greater than 0" });
     }
 
+    // Find accounts
     const [fromAccount, toAccount] = await Promise.all([
       Account.findOne({ _id: fromAccountId, user: req.userId }),
       Account.findOne({ _id: toAccountId, user: req.userId })
@@ -197,59 +208,60 @@ export const transferTransaction = async (
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
-    // Start a session for transaction
-    const session = await Transaction.startSession();
-    session.startTransaction();
+    // Use atomic operations - NO SESSIONS
+    const updatedFromAccount = await Account.findByIdAndUpdate(
+      fromAccountId,
+      { $inc: { balance: -amount } },
+      { new: true }
+    );
 
-    try {
-      // Update balances
-      fromAccount.balance -= amount;
-      toAccount.balance += amount;
+    const updatedToAccount = await Account.findByIdAndUpdate(
+      toAccountId,
+      { $inc: { balance: amount } },
+      { new: true }
+    );
 
-      // Create expense transaction for from account
-      const expenseTransaction = new Transaction({
+    // Create transactions
+    await Promise.all([
+      Transaction.create({
         account: fromAccountId,
         amount,
-        type: "Expense" as const,
+        type: "Expense",
         category: "Transfer",
-        division: "Personal" as const,
+        division: "Personal",
         description: description || `Transfer to ${toAccount.name}`,
         user: req.userId,
-      });
-
-      // Create income transaction for to account
-      const incomeTransaction = new Transaction({
+      }),
+      Transaction.create({
         account: toAccountId,
         amount,
-        type: "Income" as const,
+        type: "Income",
         category: "Transfer",
-        division: "Personal" as const,
+        division: "Personal",
         description: description || `Transfer from ${fromAccount.name}`,
         user: req.userId,
-      });
+      })
+    ]);
 
-      await Promise.all([
-        fromAccount.save({ session }),
-        toAccount.save({ session }),
-        expenseTransaction.save({ session }),
-        incomeTransaction.save({ session })
-      ]);
+    return res.status(201).json({
+      message: "Transfer successful",
+      fromAccount: { 
+        id: updatedFromAccount?._id, 
+        name: updatedFromAccount?.name,
+        balance: updatedFromAccount?.balance 
+      },
+      toAccount: { 
+        id: updatedToAccount?._id, 
+        name: updatedToAccount?.name,
+        balance: updatedToAccount?.balance 
+      }
+    });
 
-      await session.commitTransaction();
-      
-      return res.status(201).json({
-        message: "Transfer successful",
-        fromAccount: { id: fromAccount._id, balance: fromAccount.balance },
-        toAccount: { id: toAccount._id, balance: toAccount.balance }
-      });
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
-    }
   } catch (err: any) {
     console.error("Transfer Transaction Error:", err);
-    return res.status(500).json({ message: err.message || "Failed to process transfer" });
+    return res.status(500).json({ 
+      message: "Failed to process transfer. Please try again.",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };

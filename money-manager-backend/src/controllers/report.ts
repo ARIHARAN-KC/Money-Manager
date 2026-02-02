@@ -29,6 +29,7 @@ export const exportReport = async (
 
     const startDate = new Date(filters.startDate);
     const endDate = new Date(filters.endDate);
+    endDate.setHours(23, 59, 59, 999); // Include entire end day
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return res.status(400).json({ message: "Invalid date format" });
@@ -59,7 +60,7 @@ export const exportReport = async (
     }
 
     const transactions = await Transaction.find(query)
-      .populate<{ account: AccountPopulated }>("account")
+      .populate<{ account: AccountPopulated }>("account", "name balance")
       .sort({ createdAt: -1 })
       .lean<TransactionPopulated[]>();
 
@@ -177,6 +178,7 @@ export const generateReport = async (
     if (startDate && endDate) {
       const from = new Date(startDate);
       const to = new Date(endDate);
+      to.setHours(23, 59, 59, 999);
       if (isNaN(from.getTime()) || isNaN(to.getTime())) {
         return res.status(400).json({ message: "Invalid date format" });
       }
@@ -188,7 +190,7 @@ export const generateReport = async (
     if (category) query.category = category;
 
     const transactions = await Transaction.find(query)
-      .populate<{ account: AccountPopulated }>("account")
+      .populate<{ account: AccountPopulated }>("account", "name balance")
       .sort({ createdAt: -1 })
       .lean<TransactionPopulated[]>();
 
@@ -199,6 +201,11 @@ export const generateReport = async (
       totalExpense: transactions
         .filter(t => t.type === "Expense")
         .reduce((sum, t) => sum + t.amount, 0),
+      transactionCount: transactions.length,
+      period: { 
+        start: startDate || new Date().toISOString().split('T')[0], 
+        end: endDate || new Date().toISOString().split('T')[0] 
+      },
     };
 
     return res.json({ transactions, summary });

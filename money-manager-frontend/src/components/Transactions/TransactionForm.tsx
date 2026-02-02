@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
-import { createTransaction, updateTransaction, getTransactionById, type Transaction } from "../../api/transaction";
-import apiClient from "../../utils/apiClient";
+import { createTransaction, updateTransaction, getTransactionById } from "../../api/transaction";
+import type { Transaction, CreateTransactionData } from "../../api/transaction";
+import { getAccounts } from "../../api/accounts";
+import type { PaginatedResponse } from "../../api/accounts";
 import { useNavigate, useParams } from "react-router-dom";
-
-interface Account {
-  _id: string;
-  name: string;
-  balance: number;
-}
 
 interface FormData {
   type: "Income" | "Expense";
@@ -33,24 +29,17 @@ export const TransactionForm = () => {
     tags: [],
   });
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const res = await apiClient.get("/accounts");
-        let accountsData: Account[] = [];
-
-        if (res.data && Array.isArray(res.data.data)) {
-          accountsData = res.data.data;
-        } else if (Array.isArray(res.data)) {
-          accountsData = res.data;
-        } else if (res.data && Array.isArray(res.data.items)) {
-          accountsData = res.data.items;
-        }
-
+        const res = await getAccounts();
+        const response = res.data as PaginatedResponse;
+        const accountsData = response.data || [];
         setAccounts(accountsData);
 
         if (accountsData.length > 0 && !form.account) {
@@ -58,25 +47,37 @@ export const TransactionForm = () => {
         }
       } catch (err) {
         console.error("Failed to fetch accounts:", err);
+        setError("Failed to load accounts");
       }
     };
 
     fetchAccounts();
 
     if (id) {
-      getTransactionById(id).then((t: Transaction) =>
-        setForm({
-          type: t.type,
-          amount: t.amount,
-          description: t.description ?? "",
-          category: t.category,
-          division: t.division,
-          account: t.account._id,
-          tags: t.tags || [],
-        })
-      );
+      loadTransaction(id);
     }
   }, [id]);
+
+  const loadTransaction = async (transactionId: string) => {
+    try {
+      setLoading(true);
+      const transaction = await getTransactionById(transactionId);
+      setForm({
+        type: transaction.type,
+        amount: transaction.amount,
+        description: transaction.description || "",
+        category: transaction.category,
+        division: transaction.division,
+        account: transaction.account._id,
+        tags: transaction.tags || [],
+      });
+    } catch (err: any) {
+      console.error("Failed to load transaction:", err);
+      setError(err.response?.data?.message || "Failed to load transaction");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -90,6 +91,7 @@ export const TransactionForm = () => {
     } else {
       setForm({ ...form, [name]: value });
     }
+    setError(null);
   };
 
   const handleTagAdd = () => {
@@ -115,24 +117,25 @@ export const TransactionForm = () => {
     e.preventDefault();
 
     if (form.amount <= 0) {
-      alert("Amount must be greater than 0");
+      setError("Amount must be greater than 0");
       return;
     }
 
     if (!form.category.trim()) {
-      alert("Category is required");
+      setError("Category is required");
       return;
     }
 
     if (!form.account) {
-      alert("Please select an account");
+      setError("Please select an account");
       return;
     }
 
     setLoading(true);
+    setError(null);
 
     try {
-      const transactionData = {
+      const transactionData: CreateTransactionData = {
         type: form.type,
         amount: form.amount,
         description: form.description || undefined,
@@ -149,8 +152,8 @@ export const TransactionForm = () => {
       }
       navigate("/transactions");
     } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.message || "Failed to save transaction");
+      console.error("Transaction save failed:", err);
+      setError(err.response?.data?.message || "Failed to save transaction");
     } finally {
       setLoading(false);
     }
@@ -169,6 +172,18 @@ export const TransactionForm = () => {
 
     return suggestions;
   };
+
+  if (loading && id) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6aba54]"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -192,6 +207,12 @@ export const TransactionForm = () => {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -261,6 +282,7 @@ export const TransactionForm = () => {
                   min="0.01"
                   step="0.01"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -286,6 +308,7 @@ export const TransactionForm = () => {
                   placeholder="e.g., Food, Salary, Transport"
                   required
                   list="category-suggestions"
+                  disabled={loading}
                 />
                 <datalist id="category-suggestions">
                   {getCategorySuggestions().map((cat, index) => (
@@ -314,6 +337,7 @@ export const TransactionForm = () => {
                   rows={3}
                   className="block w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all duration-200 placeholder-gray-400 resize-none"
                   placeholder="Add a note about this transaction"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -331,6 +355,7 @@ export const TransactionForm = () => {
                       ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     }`}
+                  disabled={loading}
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.division === "Personal" ? "bg-blue-100" : "bg-gray-200"
@@ -350,6 +375,7 @@ export const TransactionForm = () => {
                       ? "bg-purple-50 border-purple-200 text-purple-700 shadow-sm"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     }`}
+                  disabled={loading}
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${form.division === "Office" ? "bg-purple-100" : "bg-gray-200"
@@ -382,6 +408,7 @@ export const TransactionForm = () => {
                   onChange={handleChange}
                   className="block w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all duration-200 appearance-none"
                   required
+                  disabled={loading || accounts.length === 0}
                 >
                   <option value="">Select Account</option>
                   {accounts.map((account) => (
@@ -396,9 +423,9 @@ export const TransactionForm = () => {
                   </svg>
                 </div>
               </div>
-              {form.account && accounts.find(a => a._id === form.account) && (
+              {form.account && accounts.find((a: any) => a._id === form.account) && (
                 <p className="mt-2 text-xs text-gray-500">
-                  Selected account balance: ₹{accounts.find(a => a._id === form.account)?.balance.toLocaleString()}
+                  Selected account balance: ₹{accounts.find((a: any) => a._id === form.account)?.balance.toLocaleString()}
                 </p>
               )}
             </div>
@@ -418,12 +445,14 @@ export const TransactionForm = () => {
                     onKeyPress={handleKeyPress}
                     className="block w-full pl-4 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all duration-200 placeholder-gray-400"
                     placeholder="Add a tag and press Enter"
+                    disabled={loading}
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleTagAdd}
                   className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
+                  disabled={loading}
                 >
                   Add
                 </button>
@@ -441,6 +470,7 @@ export const TransactionForm = () => {
                         type="button"
                         onClick={() => handleTagRemove(tag)}
                         className="ml-2 text-indigo-500 hover:text-indigo-700"
+                        disabled={loading}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -452,13 +482,13 @@ export const TransactionForm = () => {
               )}
             </div>
 
-            {/* Action Buttons */}bg-gradient-to-r
+            {/* Action Buttons */}
             <div className="pt-6 border-t border-gray-100">
               <div className="flex space-x-3">
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`flex-1 flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white  from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${loading ? "opacity-80 cursor-not-allowed" : ""
+                  className={`flex-1 flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-base font-medium text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl ${loading ? "opacity-80 cursor-not-allowed" : ""
                     }`}
                 >
                   {loading ? (
@@ -483,66 +513,13 @@ export const TransactionForm = () => {
                   type="button"
                   onClick={() => navigate("/transactions")}
                   className="px-6 py-4 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors duration-200"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
               </div>
             </div>
           </form>
-
-          {/* Help Text */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-start">
-                <svg className="h-5 w-5 text-gray-400 mt-0.5 shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                  <p className="text-sm text-gray-600">
-                    <strong>Tips:</strong> Categorize your transactions accurately for better insights.
-                    Use tags to filter and search transactions easily.
-                    Make sure to select the correct account for accurate balance tracking.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Preview Card */}
-        <div className="mt-6 bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Transaction Preview</h3>
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${form.type === "Income" ? "bg-emerald-100" : "bg-red-100"
-                  }`}>
-                  <span className="text-lg">
-                    {form.type === "Income" ? "💰" : "💸"}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-800">
-                    {form.category || "Category"}
-                  </h4>
-                  <p className="text-sm text-gray-500">{form.description || "No description"}</p>
-                </div>
-              </div>
-              <div className={`text-lg font-bold ${form.type === "Income" ? "text-emerald-600" : "text-red-600"
-                }`}>
-                {form.type === "Income" ? "+" : "-"}₹{form.amount.toLocaleString()}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.division === "Personal" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                }`}>
-                {form.division}
-              </span>
-              <span>
-                Account: {accounts.find(a => a._id === form.account)?.name || "Not selected"}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

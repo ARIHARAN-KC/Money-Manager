@@ -1,6 +1,9 @@
-export type Account = {
+export interface Account {
   _id: string;
   name: string;
   balance: number;
-  createdAt: string;
-};
+  user: string;
+  isPrimary?: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}

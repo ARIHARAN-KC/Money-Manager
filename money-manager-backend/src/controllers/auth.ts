@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/user";
+import Account from "../models/account";
 import { signToken } from "../utils/jwt";
 
 // Register user
@@ -15,6 +16,14 @@ export const register = async (req: Request, res: Response) => {
     if (exists) return res.status(400).json({ message: "User already exists" });
 
     const user = await User.create({ name, email: emailNormalized, password });
+
+    // Create a default account for the user (set as primary)
+    await Account.create({
+      name: "Main Account",
+      balance: 0,
+      user: user._id,
+      isPrimary: true,
+    });
 
     const token = signToken({ id: user._id.toString(), email: user.email });
     const refreshToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d" });
@@ -43,6 +52,18 @@ export const login = async (req: Request, res: Response) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
+    // Check if user has at least one account, if not create a default one
+    const accountCount = await Account.countDocuments({ user: user._id });
+
+    if (accountCount === 0) {
+      await Account.create({
+        name: "Main Account",
+        balance: 0,
+        user: user._id,
+        isPrimary: true,
+      });
+    }
+
     const token = signToken({ id: user._id.toString(), email: user.email });
     const refreshToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d" });
 
@@ -61,6 +82,18 @@ export const googleCallback = async (req: Request, res: Response) => {
       console.error("Google OAuth: No user in request");
       const errorRedirect = `${process.env.FRONTEND_URL}/oauth-success?popup=true&error=Authentication failed`;
       return res.redirect(errorRedirect);
+    }
+
+    // Check if user has at least one account, if not create a default one
+    const accountCount = await Account.countDocuments({ user: user._id });
+
+    if (accountCount === 0) {
+      await Account.create({
+        name: "Main Account",
+        balance: 0,
+        user: user._id,
+        isPrimary: true,
+      });
     }
 
     const token = signToken({ id: user._id.toString(), email: user.email });

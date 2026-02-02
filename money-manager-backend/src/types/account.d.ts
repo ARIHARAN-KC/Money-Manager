@@ -12,3 +12,19 @@ export interface IAccount {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface CreateAccountData {
+  name: string;
+  balance?: number;
+  isPrimary?: boolean;
+}
+
+export interface UpdateAccountData {
+  name?: string;
+  balance?: number;
+  isPrimary?: boolean;
+}
+
+// Set account as primary
+export const setPrimaryAccount = (id: string) =>
+  apiClient.put(`/accounts/${id}/set-primary`);

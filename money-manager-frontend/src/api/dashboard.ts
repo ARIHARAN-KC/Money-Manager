@@ -1,89 +1,76 @@
 import apiClient from "../utils/apiClient";
 
-export interface Summary {
-  income: number;
-  expense: number;
-  net: number;
+export interface SummaryResponse {
+  _id: string;
+  total: number;
 }
 
-export interface CategorySummaryItem {
+export interface CategorySummaryResponse {
   _id: string;
-  category: string;
-  total: number;
+  income: number;
+  expense: number;
 }
 
 export interface RangeTransactionsResponse {
   transactions: any[];
-  total: number;
+  totalTransactions: number;
   page: number;
   limit: number;
   totalPages: number;
 }
 
-// Dashboard API calls
+export interface DashboardSummaryResponse {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalItems: number;
+  summary: SummaryResponse[];
+}
+
+export interface CategorySummaryApiResponse {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalItems: number;
+  summary: CategorySummaryResponse[];
+}
+
+export interface RangeSummaryApiResponse {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalTransactions: number;
+  transactions: any[];
+}
+
+// Get summary (Income/Expense totals by type)
 export const getSummary = async (
   type: "weekly" | "monthly" | "yearly", 
   page = 1, 
   limit = 10
-): Promise<{ data: Summary }> => {
+): Promise<DashboardSummaryResponse> => {
   const res = await apiClient.get(`/dashboard/summary?type=${type}&page=${page}&limit=${limit}`);
   return res.data;
 };
 
+// Get category summary
 export const getCategorySummary = async (
   page = 1, 
   limit = 10
-): Promise<{ data: { items: CategorySummaryItem[] } }> => {
+): Promise<CategorySummaryApiResponse> => {
   const res = await apiClient.get(`/dashboard/categories?page=${page}&limit=${limit}`);
-  
-  // Ensure consistent response format
-  if (res.data && res.data.data && Array.isArray(res.data.data)) {
-    return { data: { items: res.data.data } };
-  }
-  
-  if (res.data && Array.isArray(res.data)) {
-    return { data: { items: res.data } };
-  }
-  
-  return { data: { items: [] } };
+  return res.data;
 };
 
+// Get range transactions
 export const getRangeTransactions = async (
   from: string,
   to: string,
   page = 1,
   limit = 10
-): Promise<{ data: RangeTransactionsResponse }> => {
+): Promise<RangeSummaryApiResponse> => {
   const res = await apiClient.get(
     `/dashboard/range?from=${from}&to=${to}&page=${page}&limit=${limit}`
   );
-  
-  // Ensure consistent response format
-  if (res.data && res.data.data && Array.isArray(res.data.data)) {
-    return { data: { 
-      transactions: res.data.data,
-      total: res.data.total || res.data.data.length,
-      page: res.data.page || page,
-      limit: res.data.limit || limit,
-      totalPages: res.data.totalPages || 1
-    } };
-  }
-  
-  if (res.data && Array.isArray(res.data)) {
-    return { data: {
-      transactions: res.data,
-      total: res.data.length,
-      page,
-      limit,
-      totalPages: Math.ceil(res.data.length / limit)
-    } };
-  }
-  
-  return { data: {
-    transactions: [],
-    total: 0,
-    page,
-    limit,
-    totalPages: 0
-  } };
+  return res.data;
 };

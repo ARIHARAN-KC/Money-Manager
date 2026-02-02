@@ -3,6 +3,7 @@ import {
   createAccount,
   getAccounts,
   getAccountById,
+  setPrimaryAccount,
   updateAccount,
   deleteAccount,
 } from "../controllers/account";
@@ -21,6 +22,9 @@ router.get("/", getAccounts);
 
 // Get account by ID (user-only)
 router.get("/:id", getAccountById);
+
+// Set account as primary
+router.put("/:id/set-primary", setPrimaryAccount);
 
 // Update account (user-only)
 router.put("/:id", updateAccount);

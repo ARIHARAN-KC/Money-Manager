@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAccounts } from "../api/accounts";
+import type { PaginatedResponse } from "../api/accounts";
 import type { Account } from "../types/account";
 import { AccountForm } from "../components/Accounts/AccountForm";
 import { AccountList } from "../components/Accounts/AccountList";
@@ -8,26 +9,56 @@ import { Loader } from "../components/UI/Loader";
 export const AccountsPage = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    totalItems: 0,
+  });
 
-  const loadAccounts = async () => {
+  const loadAccounts = async (page = pagination.page, limit = pagination.limit) => {
     try {
       setLoading(true);
-      const res = await getAccounts();
-      // The API function now returns { data: { items: [...] } }
-      setAccounts(res.data.items || []);
+      const res = await getAccounts(page, limit);
+
+      // Handle the paginated response format from backend
+      const response = res.data as PaginatedResponse;
+
+      // Cast the data to Account[] type
+      const accountsData: Account[] = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      setAccounts(accountsData);
+      setPagination({
+        page: response.page,
+        limit: response.limit,
+        totalPages: response.totalPages,
+        totalItems: response.totalItems,
+      });
     } catch (error) {
       console.error("Failed to load accounts:", error);
       setAccounts([]);
+      setPagination({
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+        totalItems: 0,
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    loadAccounts(page);
   };
 
   useEffect(() => {
     loadAccounts();
   }, []);
 
-  if (loading) {
+  if (loading && accounts.length === 0) {
     return (
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -36,6 +67,14 @@ export const AccountsPage = () => {
       </div>
     );
   }
+
+  const totalBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+  const positiveAccounts = accounts.filter(acc => (acc.balance || 0) > 0).length;
+  const zeroAccounts = accounts.filter(acc => (acc.balance || 0) === 0).length;
+  const negativeAccounts = accounts.filter(acc => (acc.balance || 0) < 0).length;
+  const primaryAccount = accounts.find(acc => acc.isPrimary);
+  const otherAccounts = accounts.filter(acc => !acc.isPrimary);
+  const hasPrimaryAccount = !!primaryAccount;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -60,14 +99,22 @@ export const AccountsPage = () => {
             <div className="flex items-center space-x-4">
               <div className="bg-white rounded-xl px-4 py-2 border border-gray-200 shadow-sm">
                 <p className="text-xs text-gray-500">Total Accounts</p>
-                <p className="text-lg font-semibold text-gray-800">{accounts.length}</p>
+                <p className="text-lg font-semibold text-gray-800">{pagination.totalItems}</p>
               </div>
               <div className="bg-white rounded-xl px-4 py-2 border border-gray-200 shadow-sm">
                 <p className="text-xs text-gray-500">Total Balance</p>
                 <p className="text-lg font-semibold text-emerald-600">
-                  ₹{accounts.reduce((sum, acc) => sum + acc.balance, 0).toLocaleString()}
+                  ₹{totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
+              {primaryAccount && (
+                <div className="bg-linear-to-br from-yellow-50 to-amber-50 rounded-xl px-4 py-2 border border-amber-200 shadow-sm">
+                  <p className="text-xs text-amber-600">Primary Account</p>
+                  <p className="text-lg font-semibold text-amber-700 truncate max-w-30">
+                    {primaryAccount.name}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -75,7 +122,10 @@ export const AccountsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Account Form */}
           <div className="lg:col-span-1">
-            <AccountForm onSuccess={loadAccounts} />
+            <AccountForm
+              onSuccess={() => loadAccounts()}
+              hasPrimaryAccount={hasPrimaryAccount}
+            />
 
             {/* Stats Card */}
             <div className="mt-6 bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
@@ -83,16 +133,50 @@ export const AccountsPage = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">Primary Account</span>
+                    <span className="text-sm font-semibold text-amber-600">
+                      {primaryAccount ? "✓ Active" : "Not set"}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-amber-500 h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${pagination.totalItems > 0 ? 100 : 0}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">Additional Accounts</span>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {otherAccounts.length} account{otherAccounts.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${pagination.totalItems > 0 ? (otherAccounts.length / pagination.totalItems) * 100 : 0}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium text-gray-700">Positive Balance</span>
                     <span className="text-sm font-semibold text-emerald-600">
-                      {accounts.filter(acc => acc.balance > 0).length} accounts
+                      {positiveAccounts} account{positiveAccounts !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
                       style={{
-                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance > 0).length / accounts.length) * 100 : 0}%`
+                        width: `${pagination.totalItems > 0 ? (positiveAccounts / pagination.totalItems) * 100 : 0}%`
                       }}
                     ></div>
                   </div>
@@ -102,14 +186,14 @@ export const AccountsPage = () => {
                   <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium text-gray-700">Zero Balance</span>
                     <span className="text-sm font-semibold text-gray-600">
-                      {accounts.filter(acc => acc.balance === 0).length} accounts
+                      {zeroAccounts} account{zeroAccounts !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-gray-400 h-2 rounded-full transition-all duration-500"
                       style={{
-                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance === 0).length / accounts.length) * 100 : 0}%`
+                        width: `${pagination.totalItems > 0 ? (zeroAccounts / pagination.totalItems) * 100 : 0}%`
                       }}
                     ></div>
                   </div>
@@ -119,14 +203,14 @@ export const AccountsPage = () => {
                   <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium text-gray-700">Negative Balance</span>
                     <span className="text-sm font-semibold text-red-600">
-                      {accounts.filter(acc => acc.balance < 0).length} accounts
+                      {negativeAccounts} account{negativeAccounts !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-red-500 h-2 rounded-full transition-all duration-500"
                       style={{
-                        width: `${accounts.length > 0 ? (accounts.filter(acc => acc.balance < 0).length / accounts.length) * 100 : 0}%`
+                        width: `${pagination.totalItems > 0 ? (negativeAccounts / pagination.totalItems) * 100 : 0}%`
                       }}
                     ></div>
                   </div>
@@ -139,7 +223,7 @@ export const AccountsPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <p className="text-sm text-gray-600">
-                    Keep your accounts updated to maintain accurate financial tracking.
+                    Primary account is used as default for transactions. You can edit all accounts including the primary one, but only delete non-primary accounts.
                   </p>
                 </div>
               </div>
@@ -148,7 +232,14 @@ export const AccountsPage = () => {
 
           {/* Right Column - Account List */}
           <div className="lg:col-span-2">
-            <AccountList accounts={accounts} onRefresh={loadAccounts} />
+            <AccountList
+              accounts={accounts}
+              onRefresh={() => loadAccounts()}
+              pagination={{
+                ...pagination,
+                onPageChange: handlePageChange,
+              }}
+            />
 
             {/* Quick Actions */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">

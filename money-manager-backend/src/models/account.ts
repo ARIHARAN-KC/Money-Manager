@@ -1,14 +1,17 @@
-import mongoose, { Schema, Types, Model } from "mongoose";
+import mongoose, { Schema, Types, Model, Document } from "mongoose";
 
 export interface IAccount {
   name: string;
   balance: number;
   user: Types.ObjectId;
+  isPrimary?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-const accountSchema = new Schema<IAccount>(
+type AccountDocument = IAccount & Document;
+
+const accountSchema = new Schema<AccountDocument>(
   {
     name: {
       type: String,
@@ -25,6 +28,11 @@ const accountSchema = new Schema<IAccount>(
       required: true,
       index: true,
     },
+    isPrimary: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -36,8 +44,8 @@ const accountSchema = new Schema<IAccount>(
 accountSchema.index({ name: 1, user: 1 }, { unique: true });
 
 // Ensure correct model reuse in hot-reload / serverless
-const Account: Model<IAccount> =
+const Account: Model<AccountDocument> =
   mongoose.models.Account ??
-  mongoose.model<IAccount>("Account", accountSchema);
+  mongoose.model<AccountDocument>("Account", accountSchema);
 
 export default Account;

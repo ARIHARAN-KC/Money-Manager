@@ -36,25 +36,21 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
     division: {
       type: String,
       enum: ["Personal", "Office"],
       required: true,
-      index: true,
     },
     account: {
       type: Schema.Types.ObjectId,
       ref: "Account",
       required: true,
-      index: true,
     },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     tags: [{
       type: String,
@@ -67,7 +63,7 @@ const transactionSchema = new Schema<ITransaction>(
   }
 );
 
-// Query performance indexes
+// Query performance indexes - ONLY THESE INDEXES
 transactionSchema.index({ account: 1, createdAt: -1 });
 transactionSchema.index({ category: 1 });
 transactionSchema.index({ division: 1 });

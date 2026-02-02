@@ -1,27 +1,16 @@
-// money-manager-frontend/src/pages/DashboardPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getSummary,
   getCategorySummary,
   getRangeTransactions,
+  type SummaryResponse,
+  type CategorySummaryResponse,
+  type RangeSummaryApiResponse,
 } from "../api/dashboard";
-import { getTransactions } from "../api/transaction";
+import { getAccounts } from "../api/accounts"; // Import accounts API
+import type { Account } from "../types/account"; // Import Account type
 import { Loader } from "../components/UI/Loader";
-import { TransactionModal } from "../components/Transactions/TransactionModal";
-import { TransactionFilters } from "../components/Transactions/TransactionFilters";
-
-type Summary = {
-  income: number;
-  expense: number;
-  net: number;
-};
-
-type Category = {
-  _id: string;
-  category: string;
-  total: number;
-};
 
 type Transaction = {
   _id: string;
@@ -50,31 +39,72 @@ interface FilterOptions {
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const [type, setType] = useState<"weekly" | "monthly" | "yearly">("weekly");
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [summaryData, setSummaryData] = useState<SummaryResponse[]>([]);
+  const [categoryData, setCategoryData] = useState<CategorySummaryResponse[]>([]);
+  const [rangeData, setRangeData] = useState<RangeSummaryApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]); // Add accounts state
 
-  const today = new Date().toISOString().split('T')[0];
-  const startOfMonth = `${today.slice(0, 7)}-01`;
+  // Calculate derived summary values
+  const incomeTotal = summaryData.find(item => item._id === "Income")?.total || 0;
+  const expenseTotal = summaryData.find(item => item._id === "Expense")?.total || 0;
+  
+  // Find primary account balance (this is our savings/net balance)
+  const primaryAccount = accounts.find(acc => acc.isPrimary);
+  const netBalance = primaryAccount?.balance || 0; // Net balance = Primary account balance
+  
+  // Calculate expenses as: Total Income - Net Balance (Savings)
+  // This ensures expenses don't include savings
+  const calculatedExpenses = Math.max(0, incomeTotal - netBalance);
+
+  // Set default date range to last 30 days
+  const endDate = new Date().toISOString().split('T')[0];
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 30);
+  const defaultStartDate = startDate.toISOString().split('T')[0];
 
   const loadDashboard = async () => {
     try {
       setLoading(true);
 
-      const [summaryRes, categoryRes, rangeRes] = await Promise.all([
-        getSummary(type),
-        getCategorySummary(),
-        getRangeTransactions(startOfMonth, today),
+      const [summaryRes, categoryRes, rangeRes, accountsRes] = await Promise.all([
+        getSummary(type, 1, 10),
+        getCategorySummary(1, 10),
+        getRangeTransactions(defaultStartDate, endDate, 1, 10),
+        getAccounts(1, 100), // Fetch accounts with higher limit
       ]);
 
-      setSummary(summaryRes.data);
-      setCategories(categoryRes.data.items || []);
-      setTransactions(rangeRes.data.transactions || []);
+      setSummaryData(summaryRes.summary || []);
+      setCategoryData(categoryRes.summary || []);
+      setRangeData(rangeRes);
+      setAccounts(accountsRes.data?.data || []); // Set accounts data
+
+      // Extract categories from both sources
+      const uniqueCategories = Array.from(
+        new Set([
+          ...(categoryRes.summary?.map(item => item._id) || []),
+          ...(rangeRes.transactions?.map((t: any) => t.category) || [])
+        ])
+      ).filter(Boolean) as string[];
+
+      setAllCategories(uniqueCategories);
     } catch (err) {
       console.error("Dashboard load failed", err);
+      // Set default values on error
+      setSummaryData([
+        { _id: "Income", total: 0 },
+        { _id: "Expense", total: 0 }
+      ]);
+      setCategoryData([]);
+      setAccounts([]);
+      setRangeData({
+        transactions: [],
+        totalTransactions: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      });
     } finally {
       setLoading(false);
     }
@@ -82,44 +112,44 @@ export const DashboardPage = () => {
 
   useEffect(() => {
     loadDashboard();
-    fetchAllCategories();
   }, [type]);
-
-  const fetchAllCategories = async () => {
-    try {
-      const res = await getTransactions(1, 100);
-      const transactionsData = res.data || [];
-      const uniqueCategories: string[] = [...new Set(transactionsData.map((t: any) => t.category as string))];
-      setAllCategories(uniqueCategories);
-    } catch (err) {
-      console.error("Failed to fetch categories:", err);
-    }
-  };
 
   const handleFilterChange = async (newFilters: FilterOptions) => {
     try {
       setLoading(true);
-      const res = await getRangeTransactions(newFilters.startDate, newFilters.endDate);
-      let filtered = res.data.transactions || [];
-
-      // Apply additional filters
-      if (newFilters.type !== "all") {
-        filtered = filtered.filter((t: any) => t.type === newFilters.type);
-      }
-
-      if (newFilters.division !== "all") {
-        filtered = filtered.filter((t: any) => t.division === newFilters.division);
-      }
-
-      if (newFilters.category) {
-        filtered = filtered.filter((t: any) => t.category === newFilters.category);
-      }
-
-      filtered = filtered.filter((t: any) =>
-        t.amount >= newFilters.minAmount && t.amount <= newFilters.maxAmount
+      const res = await getRangeTransactions(
+        newFilters.startDate,
+        newFilters.endDate,
+        1,
+        10
       );
 
-      setTransactions(filtered);
+      if (res && res.transactions) {
+        let filtered = [...res.transactions];
+
+        // Apply additional filters
+        if (newFilters.type !== "all") {
+          filtered = filtered.filter((t: any) => t.type === newFilters.type);
+        }
+
+        if (newFilters.division !== "all") {
+          filtered = filtered.filter((t: any) => t.division === newFilters.division);
+        }
+
+        if (newFilters.category) {
+          filtered = filtered.filter((t: any) => t.category === newFilters.category);
+        }
+
+        filtered = filtered.filter((t: any) =>
+          t.amount >= newFilters.minAmount && t.amount <= newFilters.maxAmount
+        );
+
+        setRangeData({
+          ...res,
+          transactions: filtered,
+          totalTransactions: filtered.length,
+        });
+      }
     } catch (err) {
       console.error("Filter failed:", err);
     } finally {
@@ -131,15 +161,7 @@ export const DashboardPage = () => {
     navigate("/transactions");
   };
 
-  // const handleViewReports = () => {
-  //   navigate("/reports");
-  // };
-
-  // const handleViewBudget = () => {
-  //   navigate("/budget");
-  // };
-
-  if (loading && transactions.length === 0) {
+  if (loading && !rangeData) {
     return (
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -148,6 +170,14 @@ export const DashboardPage = () => {
       </div>
     );
   }
+
+  const transactions = rangeData?.transactions || [];
+
+  // Calculate statistics from actual transactions
+  const personalTransactions = transactions.filter((t: any) => t.division === "Personal").length;
+  const officeTransactions = transactions.filter((t: any) => t.division === "Office").length;
+  const incomeTransactions = transactions.filter((t: any) => t.type === "Income").length;
+  const expenseTransactions = transactions.filter((t: any) => t.type === "Expense").length;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -171,39 +201,6 @@ export const DashboardPage = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* Quick Actions */}
-            <div className="flex space-x-3">
-              {/* <button
-                onClick={handleViewReports}
-                className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Reports
-              </button>
-
-              <button
-                onClick={handleViewBudget}
-                className="inline-flex items-center px-4 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Budget
-              </button>
-
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center px-4 py-2.5 bg-[#6aba54] text-white font-medium rounded-lg hover:bg-[#5aa044] transition-colors shadow-sm"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Transaction
-              </button> */}
-            </div>
-
             {/* Summary Type Selector */}
             <div className="inline-flex rounded-xl bg-white p-1 shadow-sm border border-gray-200">
               {(["weekly", "monthly", "yearly"] as const).map((t) => (
@@ -211,8 +208,8 @@ export const DashboardPage = () => {
                   key={t}
                   onClick={() => setType(t)}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${type === t
-                      ? "bg-[#6aba54] text-white shadow-sm"
-                      : "text-gray-600 hover:text-[#6aba54]"
+                    ? "bg-[#6aba54] text-white shadow-sm"
+                    : "text-gray-600 hover:text-[#6aba54]"
                     }`}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -222,14 +219,9 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Filter Section */}
-        <TransactionFilters
-          onFilterChange={handleFilterChange}
-          categories={allCategories}
-        />
-
-        {/* Summary Cards */}
+        {/* Summary Cards - Updated with correct logic */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total Income Card */}
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-linear-to-br from-emerald-50 to-green-50 rounded-xl flex items-center justify-center">
@@ -242,12 +234,13 @@ export const DashboardPage = () => {
               </span>
             </div>
             <h3 className="text-sm font-medium text-gray-500 mb-2">Total Income</h3>
-            <p className="text-3xl font-bold text-gray-800">₹{summary?.income?.toLocaleString() || 0}</p>
+            <p className="text-3xl font-bold text-gray-800">₹{incomeTotal.toLocaleString()}</p>
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Current {type} period</p>
+              <p className="text-xs text-gray-500">Total earnings this {type}</p>
             </div>
           </div>
 
+          {/* Total Expense Card */}
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-linear-to-br from-red-50 to-rose-50 rounded-xl flex items-center justify-center">
@@ -259,34 +252,58 @@ export const DashboardPage = () => {
                 Expense
               </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Expense</h3>
-            <p className="text-3xl font-bold text-gray-800">₹{summary?.expense?.toLocaleString() || 0}</p>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Expenses</h3>
+            <p className="text-3xl font-bold text-gray-800">₹{calculatedExpenses.toLocaleString()}</p>
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Current {type} period</p>
+              <p className="text-xs text-gray-500">Total spending this {type}</p>
+              <p className="text-xs text-gray-400 mt-1">(Income - Savings)</p>
             </div>
           </div>
 
+          {/* Net Balance Card */}
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${netBalance >= 0 
+                ? 'bg-emerald-50' 
+                : 'bg-red-50'}`}>
+                <svg className={`w-6 h-6 ${netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {netBalance >= 0 ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  )}
                 </svg>
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${(summary?.net || 0) >= 0
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-red-50 text-red-700'
-                }`}>
-                {(summary?.net || 0) >= 0 ? 'Profit' : 'Loss'}
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${netBalance >= 0 
+                ? 'bg-emerald-50 text-emerald-700' 
+                : 'bg-red-50 text-red-700'}`}>
+                {netBalance >= 0 ? 'Savings' : 'Deficit'}
               </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Net Balance</h3>
-            <p className={`text-3xl font-bold ${(summary?.net || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'
-              }`}>
-              {(summary?.net || 0) >= 0 ? '+' : '-'}₹{Math.abs(summary?.net || 0).toLocaleString()}
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Net Balance (Savings)</h3>
+            <p className={`text-3xl font-bold ${netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              ₹{netBalance.toLocaleString()}
             </p>
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">Current {type} period</p>
+              <p className="text-xs text-gray-500">Current savings balance</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {primaryAccount ? primaryAccount.name : "Set a primary account"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Info Banner */}
+        <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center space-x-3">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-blue-800">How it's calculated:</p>
+              <p className="text-xs text-blue-600">
+                Expenses = Total Income - Savings | Savings = Primary Account Balance
+              </p>
             </div>
           </div>
         </div>
@@ -301,7 +318,7 @@ export const DashboardPage = () => {
               </svg>
             </div>
 
-            {categories.length === 0 ? (
+            {categoryData.length === 0 ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,28 +329,41 @@ export const DashboardPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {categories.map((category) => {
-                  const total = categories.reduce((sum, c) => sum + c.total, 0);
-                  const percentage = total > 0 ? (category.total / total) * 100 : 0;
+                {categoryData.map((category) => {
+                  const totalIncome = category.income || 0;
+                  const totalExpense = category.expense || 0;
+                  const netTotal = totalIncome - totalExpense;
+                  const isPositive = netTotal >= 0;
 
                   return (
                     <div key={category._id} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-3">
                           <div className="w-3 h-3 rounded-full bg-[#6aba54]"></div>
-                          <span className="font-medium text-gray-700">{category.category}</span>
+                          <span className="font-medium text-gray-700">{category._id}</span>
                         </div>
-                        <span className="font-semibold text-gray-800">₹{category.total.toLocaleString()}</span>
+                        <div className="text-right">
+                          <span className={`font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {isPositive ? '+' : '-'}₹{Math.abs(netTotal).toLocaleString()}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            Inc: ₹{totalIncome.toLocaleString()} | Exp: ₹{totalExpense.toLocaleString()}
+                          </div>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
-                        <div
-                          className="bg-linear-to-r from-[#6aba54] to-[#5aa044] h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>{percentage.toFixed(1)}% of total</span>
-                        <span>{category.total.toLocaleString()} INR</span>
+                      <div className="flex space-x-1">
+                        {totalIncome > 0 && (
+                          <div
+                            className="bg-emerald-500 h-2 rounded-l-full transition-all duration-500"
+                            style={{ width: `${(totalIncome / (totalIncome + totalExpense || 1)) * 100}%` }}
+                          ></div>
+                        )}
+                        {totalExpense > 0 && (
+                          <div
+                            className="bg-red-500 h-2 rounded-r-full transition-all duration-500"
+                            style={{ width: `${(totalExpense / (totalIncome + totalExpense || 1)) * 100}%` }}
+                          ></div>
+                        )}
                       </div>
                     </div>
                   );
@@ -362,18 +392,24 @@ export const DashboardPage = () => {
                   </svg>
                 </div>
                 <p className="text-gray-500">No transactions found</p>
+                <button
+                  onClick={() => navigate("/transactions")}
+                  className="mt-4 inline-flex items-center px-4 py-2 bg-[#6aba54] text-white rounded-lg hover:bg-[#5aa044] transition-colors"
+                >
+                  Add Transaction
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
-                {transactions.slice(0, 5).map((transaction) => (
+                {transactions.slice(0, 5).map((transaction: any) => (
                   <div
                     key={transaction._id}
                     className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200"
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${transaction.type === "Income"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-red-50 text-red-600"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-red-50 text-red-600"
                         }`}>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           {transaction.type === "Income" ? (
@@ -387,8 +423,8 @@ export const DashboardPage = () => {
                         <h3 className="font-medium text-gray-800">{transaction.category}</h3>
                         <div className="flex items-center space-x-2 mt-1">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${transaction.division === "Personal"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-purple-100 text-purple-700"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-purple-100 text-purple-700"
                             }`}>
                             {transaction.division}
                           </span>
@@ -424,7 +460,7 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-emerald-700">Income Transactions</p>
                 <p className="text-lg font-bold text-emerald-800">
-                  {transactions.filter(t => t.type === "Income").length}
+                  {incomeTransactions}
                 </p>
               </div>
             </div>
@@ -440,13 +476,13 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-red-700">Expense Transactions</p>
                 <p className="text-lg font-bold text-red-800">
-                  {transactions.filter(t => t.type === "Expense").length}
+                  {expenseTransactions}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-linaer-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+          <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,7 +492,7 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-blue-700">Personal</p>
                 <p className="text-lg font-bold text-blue-800">
-                  {transactions.filter(t => t.division === "Personal").length}
+                  {personalTransactions}
                 </p>
               </div>
             </div>
@@ -472,22 +508,12 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-purple-700">Office</p>
                 <p className="text-lg font-bold text-purple-800">
-                  {transactions.filter(t => t.division === "Office").length}
+                  {officeTransactions}
                 </p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Transaction Modal */}
-        <TransactionModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {
-            loadDashboard();
-            fetchAllCategories();
-          }}
-        />
       </div>
     </div>
   );

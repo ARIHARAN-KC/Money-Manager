@@ -85,12 +85,12 @@ Built with a focus on **clarity, usability, and real-world finance workflows**, 
 
 **Backend**
 
-* Node.js / API routes
+* Node.js
 * RESTful architecture
 
 **Database**
 
-* SQL / NoSQL (configurable)
+* NoSQL (MongoDB atlas)
 
 **Auth & Security**
 

@@ -8,19 +8,9 @@ import {
   type CategorySummaryResponse,
   type RangeSummaryApiResponse,
 } from "../api/dashboard";
-import { getAccounts } from "../api/accounts"; // Import accounts API
-import type { Account } from "../types/account"; // Import Account type
+import { getAccounts } from "../api/accounts";
+import type { Account } from "../types/account";
 import { Loader } from "../components/UI/Loader";
-
-// interface FilterOptions {
-//   startDate: string;
-//   endDate: string;
-//   type: "all" | "Income" | "Expense";
-//   division: "all" | "Personal" | "Office";
-//   category: string;
-//   minAmount: number;
-//   maxAmount: number;
-// }
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
@@ -29,23 +19,26 @@ export const DashboardPage = () => {
   const [categoryData, setCategoryData] = useState<CategorySummaryResponse[]>([]);
   const [rangeData, setRangeData] = useState<RangeSummaryApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [accounts, setAccounts] = useState<Account[]>([]); // Add accounts state
+  const [accounts, setAccounts] = useState<Account[]>([]);
 
-  // Calculate derived summary values
-  const incomeTotal = summaryData.find(item => item._id === "Income")?.total || 0;
-  const expenseTotal = summaryData.find(item => item._id === "Expense")?.total || 0;
+  // Get data from summary API - safely access count property
+  const incomeData = summaryData.find(item => item._id === "Income");
+  const expenseData = summaryData.find(item => item._id === "Expense");
   
-  // Find primary account balance (this is our savings/net balance)
+  const incomeTotal = incomeData?.total || 0;
+  const expenseTotal = expenseData?.total || 0;
+  
+  // Access count safely - using optional chaining and type assertion
+  const incomeCount = (incomeData as any)?.count || 0;
+  const expenseCount = (expenseData as any)?.count || 0;
+  
+  // Find primary account balance
   const primaryAccount = accounts.find(acc => acc.isPrimary);
-  const netBalance = primaryAccount?.balance || 0; // Net balance = Primary account balance
+  const netBalance = primaryAccount?.balance || 0;
   
-  // Calculate expenses as: Total Income - Net Balance (Savings)
-  // This ensures expenses don't include savings
-  const calculatedExpenses = Math.max(0, incomeTotal - netBalance);
-  
-  // Calculate actual expense percentage
-  const expensePercentage = incomeTotal > 0 ? (calculatedExpenses / incomeTotal) * 100 : 0;
+  // Calculate percentages
   const savingsPercentage = incomeTotal > 0 ? (netBalance / incomeTotal) * 100 : 0;
+  const expensePercentage = incomeTotal > 0 ? (expenseTotal / incomeTotal) * 100 : 0;
 
   // Set default date range to last 30 days
   const endDate = new Date().toISOString().split('T')[0];
@@ -61,17 +54,33 @@ export const DashboardPage = () => {
         getSummary(type, 1, 10),
         getCategorySummary(1, 10),
         getRangeTransactions(defaultStartDate, endDate, 1, 10),
-        getAccounts(1, 100), // Fetch accounts with higher limit
+        getAccounts(1, 100),
       ]);
+
+      // Debug logging
+      console.log("Summary Response:", summaryRes);
+      console.log("Accounts Response:", accountsRes);
+      console.log("Accounts Data:", accountsRes.data?.data);
 
       setSummaryData(summaryRes.summary || []);
       setCategoryData(categoryRes.summary || []);
       setRangeData(rangeRes);
-      setAccounts(accountsRes.data?.data || []); // Set accounts data
+      
+      // Handle different response structures
+      let accountsData: Account[] = [];
+      if (Array.isArray(accountsRes.data)) {
+        accountsData = accountsRes.data;
+      } else if (accountsRes.data?.data && Array.isArray(accountsRes.data.data)) {
+        accountsData = accountsRes.data.data;
+      } else if (Array.isArray(accountsRes.data?.data)) {
+        accountsData = accountsRes.data.data;
+      }
+      
+      setAccounts(accountsData);
 
     } catch (err) {
       console.error("Dashboard load failed", err);
-      // Set default values on error
+      // Set default values on error without count property
       setSummaryData([
         { _id: "Income", total: 0 },
         { _id: "Expense", total: 0 }
@@ -117,8 +126,7 @@ export const DashboardPage = () => {
   // Calculate statistics from actual transactions
   const personalTransactions = transactions.filter((t: any) => t.division === "Personal").length;
   const officeTransactions = transactions.filter((t: any) => t.division === "Office").length;
-  const incomeTransactions = transactions.filter((t: any) => t.type === "Income").length;
-  const expenseTransactions = transactions.filter((t: any) => t.type === "Expense").length;
+  // Removed unused variables: incomeTransactions and expenseTransactions
 
   // Calculate total accounts balance
   const totalAccountsBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
@@ -177,13 +185,13 @@ export const DashboardPage = () => {
                 Income
               </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Income</h3>
-            <p className="text-3xl font-bold text-gray-800">₹{incomeTotal.toLocaleString()}</p>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Total</h3>
+            <p className="text-3xl font-bold text-gray-800">₹{totalAccountsBalance.toLocaleString()}</p>
             <div className="mt-4 pt-4 border-t border-gray-100">
               <div className="flex justify-between items-center">
                 <p className="text-xs text-gray-500">This {type}</p>
                 <p className="text-xs font-medium text-emerald-600">
-                  {incomeTransactions} transaction{incomeTransactions !== 1 ? 's' : ''}
+                  {incomeCount} transaction{incomeCount !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
@@ -202,13 +210,13 @@ export const DashboardPage = () => {
               </span>
             </div>
             <h3 className="text-sm font-medium text-gray-500 mb-2">Total Expenses</h3>
-            <p className="text-3xl font-bold text-gray-800">₹{calculatedExpenses.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-gray-800">₹{expenseTotal.toLocaleString()}</p>
             <div className="mt-4 pt-4 border-t border-gray-100">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <p className="text-xs text-gray-500">This {type}</p>
                   <p className="text-xs font-medium text-red-600">
-                    {expenseTransactions} transaction{expenseTransactions !== 1 ? 's' : ''}
+                    {expenseCount} transaction{expenseCount !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -285,7 +293,7 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-blue-800">How it's calculated:</p>
                 <p className="text-xs text-blue-600">
-                  Expenses = Total Income ({incomeTotal.toLocaleString()}) - Savings ({netBalance.toLocaleString()}) = {calculatedExpenses.toLocaleString()}
+                  Income: ₹{incomeTotal.toLocaleString()} | Expenses: ₹{expenseTotal.toLocaleString()} | Savings: ₹{netBalance.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -334,7 +342,8 @@ export const DashboardPage = () => {
                   const totalExpense = category.expense || 0;
                   const netTotal = totalIncome - totalExpense;
                   const isPositive = netTotal >= 0;
-                  const categoryPercentage = incomeTotal > 0 ? ((totalIncome + totalExpense) / (incomeTotal + expenseTotal)) * 100 : 0;
+                  const categoryPercentage = (incomeTotal + expenseTotal) > 0 ? 
+                    ((totalIncome + totalExpense) / (incomeTotal + expenseTotal)) * 100 : 0;
 
                   return (
                     <div key={category._id} className="space-y-2">
@@ -489,7 +498,7 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-emerald-700">Income Transactions</p>
                 <p className="text-lg font-bold text-emerald-800">
-                  {incomeTransactions}
+                  {incomeCount}
                 </p>
                 <p className="text-xs text-emerald-600">
                   ₹{incomeTotal.toLocaleString()} total
@@ -508,10 +517,10 @@ export const DashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-red-700">Expense Transactions</p>
                 <p className="text-lg font-bold text-red-800">
-                  {expenseTransactions}
+                  {expenseCount}
                 </p>
                 <p className="text-xs text-red-600">
-                  ₹{expenseTotal.toLocaleString()} raw total
+                  ₹{expenseTotal.toLocaleString()} total
                 </p>
               </div>
             </div>

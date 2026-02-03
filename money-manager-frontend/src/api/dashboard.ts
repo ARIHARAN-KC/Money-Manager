@@ -3,6 +3,7 @@ import apiClient from "../utils/apiClient";
 export interface SummaryResponse {
   _id: string;
   total: number;
+  count?:number;
 }
 
 export interface CategorySummaryResponse {

@@ -41,14 +41,11 @@ export const getSummary = async (req: AuthRequest<{}, SummaryQuery>, res: Respon
         return res.status(400).json({ message: "Invalid type" });
     }
 
-    const userObjectId = new mongoose.Types.ObjectId(req.userId);
-
-    // Get user's account IDs
     const userAccounts = await Account.find({ user: req.userId }).select("_id").lean();
     const accountIds = userAccounts.map(a => a._id);
 
-    // Aggregate transactions with proper account filtering
-    const allTransactions: any[] = await Transaction.aggregate([
+    // Get total amounts AND counts
+    const summaryResult: any[] = await Transaction.aggregate([
       {
         $match: {
           account: { $in: accountIds },
@@ -58,23 +55,29 @@ export const getSummary = async (req: AuthRequest<{}, SummaryQuery>, res: Respon
       {
         $group: {
           _id: "$type",
-          total: { $sum: "$amount" }
+          total: { $sum: "$amount" },
+          count: { $sum: 1 }
         }
       }
     ]);
 
-    // Ensure we always have Income and Expense entries
-    const incomeEntry = allTransactions.find(t => t._id === "Income") || { _id: "Income", total: 0 };
-    const expenseEntry = allTransactions.find(t => t._id === "Expense") || { _id: "Expense", total: 0 };
+    // Ensure we always have both Income and Expense entries
+    const incomeEntry = summaryResult.find(t => t._id === "Income") || { 
+      _id: "Income", 
+      total: 0,
+      count: 0
+    };
+    const expenseEntry = summaryResult.find(t => t._id === "Expense") || { 
+      _id: "Expense", 
+      total: 0,
+      count: 0
+    };
 
     const summary = [incomeEntry, expenseEntry];
 
-    const pageNumber = Math.max(parseInt(page || "1", 10), 1);
-    const pageSize = Math.max(parseInt(limit || "10", 10), 1);
-
     return res.json({
-      page: pageNumber,
-      limit: pageSize,
+      page: 1,
+      limit: 10,
       totalPages: 1,
       totalItems: summary.length,
       summary: summary,

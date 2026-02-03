@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { setTokens } from "../utils/token";
@@ -14,90 +14,86 @@ export const LoginPage = () => {
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
 
   const GOOGLE_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL}/auth/google?popup=true`;
+  const BACKEND_ORIGIN = new URL(import.meta.env.VITE_API_BASE_URL).origin;
 
-  // Message handler
-  const handleOAuthMessage = (event: MessageEvent) => {
-    // console.log("LoginPage - Received message from:", event.origin);
-    // console.log("LoginPage - Message data type:", event.data?.type);
+  /** -------------------------------
+   * OAuth Message Handler
+   -------------------------------- */
+  const handleOAuthMessage = useCallback(
+    (event: MessageEvent) => {
+      if (
+        event.origin !== window.location.origin &&
+        event.origin !== BACKEND_ORIGIN
+      ) {
+        return;
+      }
 
-    // Only accept messages from same origin
-    if (event.origin !== window.location.origin) {
-      // console.log("LoginPage - Origin mismatch, ignoring");
-      return;
-    }
+      const { type, token, refreshToken, user, message } = event.data || {};
 
-    const { type, token, refreshToken, user, message } = event.data;
+      if (type === "oauth-success") {
+        if (token && refreshToken && user) {
+          setTokens(token, refreshToken);
+          auth.setUser(user);
+          setIsOAuthLoading(false);
 
-    // console.log("LoginPage - Processing message type:", type);
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 300);
+        } else {
+          setError("Authentication failed. Missing data.");
+          setIsOAuthLoading(false);
+        }
+      }
 
-    if (type === "oauth-success") {
-      // console.log("LoginPage - OAuth success! User:", user);
-
-      if (token && refreshToken && user) {
-        // Set tokens immediately
-        setTokens(token, refreshToken);
-
-        // Update auth context
-        auth.setUser(user);
-        setIsOAuthLoading(false);
-
-        // console.log("LoginPage - FORCING navigation to dashboard in main window");
-        setTimeout(() => {
-          // Use window.location for 100% guaranteed navigation
-          window.location.href = "/dashboard";
-        }, 300); // Slightly longer delay to ensure everything is set
-      } else {
-        console.error("LoginPage - OAuth success but missing data");
-        setError("Authentication failed: Missing user data");
+      if (type === "oauth-error") {
+        setError(message || "Google authentication failed.");
         setIsOAuthLoading(false);
       }
-    } else if (type === "oauth-error") {
-      // console.log("LoginPage - OAuth error:", message);
-      setError(message || "Google authentication failed.");
-      setIsOAuthLoading(false);
-    }
-  };
-  // Setup message listener
-  useEffect(() => {
-    // console.log("LoginPage - Setting up message listener");
-    window.addEventListener("message", handleOAuthMessage);
+    },
+    [auth, BACKEND_ORIGIN]
+  );
 
+  /** -------------------------------
+   * Register message listener
+   -------------------------------- */
+  useEffect(() => {
+    window.addEventListener("message", handleOAuthMessage);
     return () => {
-      // console.log("LoginPage - Cleaning up message listener");
       window.removeEventListener("message", handleOAuthMessage);
     };
-  }, [auth, navigate]);
+  }, [handleOAuthMessage]);
 
+  /** -------------------------------
+   * Email / Password Login
+   -------------------------------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      //Use await and ensure login completes
       await auth.login(email, password);
 
-      //small delay to ensure state is updated
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
-      }, 100);
-
+      }, 150);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message ||
-        err.message ||
-        "Invalid credentials. Please try again.";
-      setError(errorMessage);
-      console.error("Login error:", err);
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Invalid credentials. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
+  /** -------------------------------
+   * Google OAuth Popup
+   -------------------------------- */
   const handleGoogleLoginPopup = () => {
     setIsOAuthLoading(true);
     setError("");
-
-    // console.log("LoginPage - Opening Google OAuth popup");
 
     const width = 500;
     const height = 600;
@@ -107,38 +103,32 @@ export const LoginPage = () => {
     const popup = window.open(
       GOOGLE_AUTH_URL,
       "google-auth",
-      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,popup=yes`
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
     );
 
     if (!popup) {
-      setError("Popup blocked! Please allow popups for this site.");
+      setError("Popup blocked! Please allow popups.");
       setIsOAuthLoading(false);
       return;
     }
 
-    // Focus on the popup
     popup.focus();
 
-    // Check if popup closes
-    const checkPopup = setInterval(() => {
+    const timer = setInterval(() => {
       if (popup.closed) {
-        clearInterval(checkPopup);
+        clearInterval(timer);
         setIsOAuthLoading(false);
-        // console.log("LoginPage - Popup closed");
 
-        // After popup closes, check if we have tokens and redirect
         const token = localStorage.getItem("accessToken");
         if (token) {
-          // console.log("LoginPage - Token found after popup close, redirecting to dashboard");
-          // Small delay to ensure everything is processed
           setTimeout(() => {
             window.location.href = "/dashboard";
-          }, 500);
+          }, 300);
         }
       }
     }, 500);
   };
-
+  
   return (
     <div className="min-h-screen bg-linaer-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">

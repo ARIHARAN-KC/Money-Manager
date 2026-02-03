@@ -17,7 +17,8 @@ import { BudgetPage } from "./pages/BudgetPage";
 import { ReportsPage } from "./pages/ReportsPage";
 
 //Components
-import { TransferForm } from "./components/Transactions/TransferForm";  
+import { TransferForm } from "./components/Transactions/TransferForm";
+import { TransactionForm } from "./components/Transactions/TransactionForm";
 //Layout
 import { Layout } from "./components/Layout/Layout";
 
@@ -58,6 +59,21 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <TransferForm />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/transactions/new" element={
+            <ProtectedRoute>
+              <Layout>
+                <TransactionForm />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          {/* ADD THIS ROUTE FOR EDITING */}
+          <Route path="/transactions/:id/edit" element={
+            <ProtectedRoute>
+              <Layout>
+                <TransactionForm />
               </Layout>
             </ProtectedRoute>
           } />

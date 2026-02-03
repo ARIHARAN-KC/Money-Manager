@@ -49,6 +49,7 @@ export interface TransactionPopulated {
 export interface ReportSummary {
   totalIncome: number;
   totalExpense: number;
+  netBalance?: number;
   transactionCount?: number;
   period?: { start: string; end: string };
 }

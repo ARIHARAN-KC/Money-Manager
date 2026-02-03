@@ -85,12 +85,12 @@ Built with a focus on **clarity, usability, and real-world finance workflows**, 
 
 **Backend**
 
-* Node.js / API routes
+* Node.js
 * RESTful architecture
 
 **Database**
 
-* SQL / NoSQL (configurable)
+* NoSQL (MongoDB atlas)
 
 **Auth & Security**
 
@@ -118,7 +118,8 @@ npm install
 
 Create a `.env` file and configure:
 
-```env backend
+```
+env backend
 NODE_ENV=
 PORT=5000
 MONGO_URI=
@@ -131,7 +132,8 @@ GOOGLE_CLIENT_SECRET=
 GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
 FRONTEND_URL=http://localhost:5173
 ```
-```env frontend
+```
+env frontend
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
@@ -141,7 +143,7 @@ VITE_API_BASE_URL=http://localhost:5000/api
 npm run dev
 ```
 
-Visit: `http://localhost:3000`
+Visit: `localhost:5173`
 
 ---
 

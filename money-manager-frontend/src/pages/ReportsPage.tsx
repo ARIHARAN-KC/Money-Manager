@@ -335,7 +335,7 @@ export const ReportsPage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-linear-to-br from-emerald-50 to-green-50 p-4 rounded-xl border border-emerald-200">
-                  <p className="text-sm text-emerald-700 mb-1">Total Income</p>
+                  <p className="text-sm text-emerald-700 mb-1">Remaining Income</p>
                   <p className="text-2xl font-bold text-emerald-800">₹{reportSummary.totalIncome.toLocaleString()}</p>
                 </div>
 
